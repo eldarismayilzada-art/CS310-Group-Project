@@ -3,7 +3,8 @@ import 'screens/calendar_screen.dart';
 import 'screens/add_event_screen.dart';
 import 'screens/placeholder_screen.dart';
 import 'screens/day_detail_screen.dart';
-
+import 'screens/student_profile_screen.dart';
+import 'screens/club_profile_screen.dart';
 void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
@@ -22,12 +23,8 @@ class MyApp extends StatelessWidget {
           icon: Icons.article_rounded),
         '/calendar':        (ctx) => const CalendarScreen(),
         '/add-event':       (ctx) => const AddEventScreen(),
-        '/profile/student': (ctx) => const PlaceholderScreen(
-          title: 'Profile', navIndex: 0,
-          icon: Icons.person_rounded),
-        '/profile/club':    (ctx) => const PlaceholderScreen(
-          title: 'Club Profile', navIndex: 0,
-          icon: Icons.groups_rounded),
+        '/profile/student': (ctx) => const StudentProfileScreen(),
+        '/profile/club': (ctx) => const ClubProfileScreen(),
         '/post/pick':       (ctx) => const PlaceholderScreen(
           title: 'Create Post', navIndex: 3,
           icon: Icons.add_photo_alternate_rounded),
