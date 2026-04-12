@@ -3,10 +3,10 @@ import 'screens/calendar_screen.dart';
 import 'screens/add_event_screen.dart';
 import 'screens/placeholder_screen.dart';
 import 'screens/day_detail_screen.dart';
-import 'screens/login_page.dart';
-
 import 'screens/student_profile_screen.dart';
 import 'screens/club_profile_screen.dart';
+import 'screens/create_post_screen.dart';
+import 'screens/edit_post_screen.dart';
 void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
@@ -18,28 +18,23 @@ class MyApp extends StatelessWidget {
       title: 'ClubConnect',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(fontFamily: 'Poppins'),
-      initialRoute: '/login',
+      initialRoute: '/home',
       routes: {
-        '/login': (ctx)=> const Loginscreen(),
         '/home':            (ctx) => const PlaceholderScreen(
-          title: 'Posts', navIndex: 2,
-          icon: Icons.article_rounded),
+            title: 'Posts', navIndex: 2,
+            icon: Icons.article_rounded),
         '/calendar':        (ctx) => const CalendarScreen(),
         '/add-event':       (ctx) => const AddEventScreen(),
         '/profile/student': (ctx) => const StudentProfileScreen(),
         '/profile/club': (ctx) => const ClubProfileScreen(),
-        '/post/pick':       (ctx) => const PlaceholderScreen(
-          title: 'Create Post', navIndex: 3,
-          icon: Icons.add_photo_alternate_rounded),
-        '/post/edit':       (ctx) => const PlaceholderScreen(
-          title: 'Edit Post', navIndex: 3,
-          icon: Icons.edit_rounded),  
+        '/post/pick':       (ctx) => const CreatePostScreen(),
+        '/post/edit':       (ctx) => const EditPostScreen(),
         '/settings':        (ctx) => const PlaceholderScreen(
-          title: 'Settings', navIndex: 0,
-          icon: Icons.settings_rounded),
+            title: 'Settings', navIndex: 0,
+            icon: Icons.settings_rounded),
         '/comments':        (ctx) => const PlaceholderScreen(
-          title: 'Comments', navIndex: 2,
-          icon: Icons.comment_rounded),
+            title: 'Comments', navIndex: 2,
+            icon: Icons.comment_rounded),
       },
     );
   }
