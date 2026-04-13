@@ -50,7 +50,7 @@ class SideScreen extends StatelessWidget {
           
           // --- HOME ---
           ListTile(
-            leading: const Icon(Icons.view_headline_rounded,),
+            leading: const Icon(Icons.article_rounded, color: AppColors.primary,),
             title: const Text('Home'),
             onTap: () {
               Navigator.pop(context); 
@@ -61,7 +61,7 @@ class SideScreen extends StatelessWidget {
           
           // --- CALENDAR ---
           ExpansionTile(
-            leading: const Icon(Icons.calendar_month),
+            leading: const Icon(Icons.calendar_month, color: AppColors.primary,),
             title: const Text('Calendar'),
             children: [
               ListTile(
@@ -87,7 +87,7 @@ class SideScreen extends StatelessWidget {
           if (CurrentUser.type == UserType.club) ...[
             const Divider(),
             ListTile(
-              leading: const Icon(Icons.add_photo_alternate_outlined),
+              leading: const Icon(Icons.add_photo_alternate_outlined, color: AppColors.primary,),
               title: const Text('Create Posts'),
               onTap: () {
                 Navigator.pop(context);
@@ -99,7 +99,7 @@ class SideScreen extends StatelessWidget {
           // --- SETTINGS ---
           const Divider(),
           ListTile(
-            leading: const Icon(Icons.settings_outlined),
+            leading: const Icon(Icons.settings_outlined, color: AppColors.primary,),
             title: const Text('Settings'),
             onTap: () {
           
