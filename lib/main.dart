@@ -9,6 +9,9 @@ import 'screens/student_profile_screen.dart';
 import 'screens/club_profile_screen.dart';
 import 'screens/create_post_screen.dart';
 import 'screens/edit_post_screen.dart';
+import 'screens/settings_screen.dart';
+import 'screens/comments_screen.dart';
+import 'screens/home_screen.dart';
 
 void main() => runApp(const MyApp());
 
@@ -33,12 +36,11 @@ class MyApp extends StatelessWidget {
         '/profile/club': (ctx) => const ClubProfileScreen(),
         '/post/pick': (ctx) => const CreatePostScreen(),
         '/post/edit': (ctx) => const EditPostScreen(),
-        '/settings': (ctx) => const PlaceholderScreen(
-            title: 'Settings', navIndex: 0,
-            icon: Icons.settings_rounded),
-        '/comments': (ctx) => const PlaceholderScreen(
-            title: 'Comments', navIndex: 2,
-            icon: Icons.comment_rounded),
+        '/settings': (ctx) => const SettingsScreen(),
+        '/comments': (ctx) => const CommentsPage(
+          postId: 'post_123',
+          postOwnerName: 'Club_name',
+        ),
       },
     );
   }
