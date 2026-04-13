@@ -26,9 +26,7 @@ class MyApp extends StatelessWidget {
         '/': (context) => const Loginscreen(),
         '/interests': (ctx) => const InterestScreen(),
         '/club-login': (ctx) => const ClubProfileScreen(),
-        '/home': (ctx) => const PlaceholderScreen(
-            title: 'Posts', navIndex: 2,
-            icon: Icons.article_rounded),
+        '/home': (ctx) => const HomeScreen(),
         '/calendar': (ctx) => const CalendarScreen(),
         '/add-event': (ctx) => const AddEventScreen(),
         '/profile/student': (ctx) => const StudentProfileScreen(),
