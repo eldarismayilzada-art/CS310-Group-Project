@@ -97,10 +97,12 @@ class HomeScreen extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.chat_bubble_outline),
                 onPressed: () {
-                /*  Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const CommentsScreen()),
-                  ); */
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CommentsScreen(),
+                    ),
+                  );
                 },
               ),
               const Text('12'),
