@@ -99,14 +99,9 @@ class HomeScreen extends StatelessWidget {
                 icon: const Icon(Icons.chat_bubble_outline),
                 onPressed: () {
                   Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const CommentsPage(
-                        postID: 'post_123',
-                        postOwnerName: 'Club_name',
-                      ),
-                    ),
-                  );
+                  context,
+                  MaterialPageRoute(builder: (context) => const CommentsPage(postId: '123', postOwnerName: 'Club_name')),
+                  ); 
                 },
               ),
               const Text('12'),
