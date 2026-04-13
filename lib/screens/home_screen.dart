@@ -100,7 +100,7 @@ class HomeScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const CommentsPage(postId: '123', postOwnerName: 'Club_name')),
+                  MaterialPageRoute(builder: (context) => const CommentsPage(postI: '123', postOwnerName: 'Club_name')),
                   ); 
                 },
               ),
