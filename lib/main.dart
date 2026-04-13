@@ -36,7 +36,7 @@ class MyApp extends StatelessWidget {
         '/profile/club': (ctx) => const ClubProfileScreen(),
         '/post/pick': (ctx) => const CreatePostScreen(),
         '/post/edit': (ctx) => const EditPostScreen(),
-        '/settings': (ctx) => const SettingsScreen(),
+        '/settings': (ctx) =>  SettingsScreen(),
         '/comments': (ctx) => const CommentsPage(
           postI: 'post_123',
           postOwnerName: 'Club_name',
