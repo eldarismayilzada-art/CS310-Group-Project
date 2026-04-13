@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class CommentModel {
   final String id;
-  final String postId;
+  final String postI;
   final String text;
   final String authorName;
   final DateTime createdAt;
@@ -12,7 +12,7 @@ class CommentModel {
 
   CommentModel({
     required this.id,
-    required this.postId,
+    required this.postI,
     required this.text,
     required this.authorName,
     required this.createdAt,
@@ -23,12 +23,12 @@ class CommentModel {
 }
 
 class CommentsPage extends StatefulWidget {
-  final String postId;
+  final String postI;
   final String postOwnerName;
 
   const CommentsPage({
     super.key,
-    required this.postId,
+    required this.postI,
     required this.postOwnerName,
   });
 
@@ -64,7 +64,7 @@ class _CommentsPageState extends State<CommentsPage> {
   final List<CommentModel> _comments = [
     CommentModel(
       id: '1',
-      postId: 'post_123',
+      postI: 'post_123',
       text: 'This is an older comment.',
       authorName: 'Ayşe',
       createdAt: DateTime.now().subtract(const Duration(hours: 4)),
@@ -74,7 +74,7 @@ class _CommentsPageState extends State<CommentsPage> {
     ),
     CommentModel(
       id: '2',
-      postId: 'post_123',
+      postI: 'post_123',
       text: 'This one is newer.',
       authorName: 'Mehmet',
       createdAt: DateTime.now().subtract(const Duration(hours: 1)),
@@ -86,7 +86,7 @@ class _CommentsPageState extends State<CommentsPage> {
 
   List<CommentModel> get _filteredComments {
     final commentsForPost =
-        _comments.where((comment) => comment.postId == widget.postId).toList();
+        _comments.where((comment) => comment.postI == widget.postI).toList();
 
     commentsForPost.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return commentsForPost;
@@ -111,7 +111,7 @@ class _CommentsPageState extends State<CommentsPage> {
 
     final newComment = CommentModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      postId: widget.postId,
+      postI: widget.postI,
       text: text,
       authorName: 'Current User',
       createdAt: DateTime.now(),
