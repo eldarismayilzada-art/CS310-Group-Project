@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
-import '../utils/app_text_styles.dart';
-import '../utils/app_constants.dart';
-import '../widgets/bottom_nav_bar.dart';
 import '../screens/add_event_screen.dart';
 import '../screens/calendar_screen.dart';
 import '../screens/day_detail_screen.dart';
 import '../screens/home_screen.dart';
-import '../screens/placeholder_screen.dart';
 import '../screens/club_profile_screen.dart';
 import '../screens/student_profile_screen.dart';
 
+
 enum UserType { student, club }
+class CurrentUser {
+  static UserType type = UserType.student; 
+}
 
 class SideScreen extends StatelessWidget {
   const SideScreen({super.key});
@@ -19,21 +19,25 @@ class SideScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
+      backgroundColor: const Color(0xFFF4F3FF),
       width: MediaQuery.of(context).size.width * 0.7,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // --- PROFILE ---
           InkWell(
             onTap: () {
               Navigator.pop(context);
-              if (currentUser.type == UserType.club) {
+              if (CurrentUser.type == UserType.club) {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => const ClubProfileScreen()));
               } else {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => const StudentProfileScreen()));
               }
             },
-            const DrawerHeader(
-              decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey))),
+            child: const DrawerHeader(
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: AppColors.textSecondary)),
+              ),
               child: Row(
                 children: [
                   CircleAvatar(radius: 25, child: Icon(Icons.person)),
@@ -46,7 +50,7 @@ class SideScreen extends StatelessWidget {
           
           // --- HOME ---
           ListTile(
-            leading: const Icon(Icons.grid_on),
+            leading: const Icon(Icons.view_headline_rounded,),
             title: const Text('Home'),
             onTap: () {
               Navigator.pop(context); 
@@ -73,25 +77,34 @@ class SideScreen extends StatelessWidget {
                 title: const Text('Daily'),
                 onTap: () {
                   Navigator.pop(context);
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const DayDetailScreen()));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => DayDetailScreen(day: DateTime.now(), events: [],)));
                 },
               ),
             ],
           ),
-          const Divider(),
           
           // --- CREATE POSTS (CLUB)---
           if (CurrentUser.type == UserType.club) ...[
             const Divider(),
             ListTile(
-              leading: const Icon(Icons.add_box_outlined),
+              leading: const Icon(Icons.add_photo_alternate_outlined),
               title: const Text('Create Posts'),
               onTap: () {
-                Navigator.pop(context); 
+                Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (context) => const AddEventScreen()));
               },
             ),
           ],
+
+          // --- SETTINGS ---
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.settings_outlined),
+            title: const Text('Settings'),
+            onTap: () {
+          
+            },
+          ),
         ],
       ),
     );
