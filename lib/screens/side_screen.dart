@@ -80,15 +80,18 @@ class SideScreen extends StatelessWidget {
           ),
           const Divider(),
           
-          // --- CREATE POSTS ---
-          ListTile(
-            leading: const Icon(Icons.add_box_outlined),
-            title: const Text('Create Posts'),
-            onTap: () {
-              Navigator.pop(context); 
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const AddEventScreen()));
-            },
-          ),
+          // --- CREATE POSTS (CLUB)---
+          if (CurrentUser.type == UserType.club) ...[
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.add_box_outlined),
+              title: const Text('Create Posts'),
+              onTap: () {
+                Navigator.pop(context); 
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const AddEventScreen()));
+              },
+            ),
+          ],
         ],
       ),
     );
