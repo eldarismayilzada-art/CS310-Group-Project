@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class Loginscreen extends StatefulWidget {
   const Loginscreen({super.key});
 
@@ -23,7 +22,7 @@ class _LoginscreenState extends State<Loginscreen> {
       return;
     }
 
-    Navigator.pushReplacementNamed(context, '/interests'); // ✅ fixed route name
+    Navigator.pushReplacementNamed(context, '/interests');
   }
 
   @override
@@ -66,6 +65,8 @@ class _LoginscreenState extends State<Loginscreen> {
               ),
             ),
             const SizedBox(height: 40),
+
+            // LOGIN BUTTON
             GestureDetector(
               onTap: _handleLogin,
               child: Container(
@@ -85,6 +86,31 @@ class _LoginscreenState extends State<Loginscreen> {
                 ),
               ),
             ),
+
+            const SizedBox(height: 20),
+
+            // ARE YOU A CLUB? BUTTON
+            GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, '/club-login');
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: hubColor, width: 2),
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                child: const Text(
+                  "Are you a club? 🎓",
+                  style: TextStyle(
+                    color: Color(0xFF6A11CB),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
+
           ],
         ),
       ),

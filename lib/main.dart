@@ -21,10 +21,11 @@ class MyApp extends StatelessWidget {
       title: 'ClubConnect',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(fontFamily: 'Poppins'),
-      initialRoute: '/',         // ✅ fixed
+      initialRoute: '/',         
       routes: {
         '/': (context) => const Loginscreen(),
         '/interests': (ctx) => const InterestScreen(),
+        '/club-login': (ctx) => const ClubProfileScreen(),
         '/home': (ctx) => const PlaceholderScreen(
             title: 'Posts', navIndex: 2,
             icon: Icons.article_rounded),
