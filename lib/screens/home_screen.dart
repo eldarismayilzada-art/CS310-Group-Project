@@ -4,7 +4,7 @@ import '../utils/app_colors.dart';
 import '../utils/app_text_styles.dart';
 import '../utils/app_constants.dart';
 import '../widgets/bottom_nav_bar.dart';
-import '../widgets/app_bar.dart';
+import '../screens/side_screen.dart';
 
 
 class HomeScreen extends StatelessWidget {
@@ -30,13 +30,13 @@ class HomeScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          activity_reminder(),
+          activityReminder(),
           const Divider(),
           Expanded(
             child: ListView.builder(
               itemCount: 3,
               itemBuilder: (context, index) {
-                return activity_post(context),
+                return activityPost(context);
               },
             ),
           ),
@@ -46,7 +46,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget activity_reminder() {
+  Widget activityReminder() {
     return SizedBox (
       height: 100,
       child: ListView.builder(
@@ -65,7 +65,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget activity_post(BuildContext context) { 
+  Widget activityPost(BuildContext context) { 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -76,7 +76,7 @@ class HomeScreen extends StatelessWidget {
         Container(
           height: 250,
           width: double.infinity,
-          color: Colors.grey[200],
+          color:AppColors.textSecondary,
           child: const Center(child: Icon(Icons.image, size: 50)),
         ),
         Padding(
@@ -87,7 +87,7 @@ class HomeScreen extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.favorite_border),
                 onPressed: () {
-                  print ('liked');
+                  debugPrint ('liked');
                 },
               ),
               const Text('24'),
@@ -97,10 +97,10 @@ class HomeScreen extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.chat_bubble_outline),
                 onPressed: () {
-                  Navigator.push(
+                /*  Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const CommentsScreen()),
-                  );
+                  ); */
                 },
               ),
               const Text('12'),
