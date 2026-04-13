@@ -51,7 +51,7 @@ class SideScreen extends StatelessWidget {
           // --- HOME ---
           ListTile(
             leading: const Icon(Icons.article_rounded, color: AppColors.primary,),
-            title: const Text('Home'),
+            title: const Text('Posts'),
             onTap: () {
               Navigator.pop(context); 
               Navigator.push(context, MaterialPageRoute(builder: (context) => const HomeScreen()));
@@ -87,7 +87,7 @@ class SideScreen extends StatelessWidget {
           if (CurrentUser.type == UserType.club) ...[
             const Divider(),
             ListTile(
-              leading: const Icon(Icons.add_photo_alternate_outlined, color: AppColors.primary,),
+              leading: const Icon(Icons.add_circle_rounded, color: AppColors.primary,),
               title: const Text('Create Posts'),
               onTap: () {
                 Navigator.pop(context);
