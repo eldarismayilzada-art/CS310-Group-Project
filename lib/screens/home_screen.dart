@@ -36,7 +36,7 @@ class HomeScreen extends StatelessWidget {
             child: ListView.builder(
               itemCount: 3,
               itemBuilder: (context, index) {
-                return activity_post(context),
+                return activity_post(context);
               },
             ),
           ),
