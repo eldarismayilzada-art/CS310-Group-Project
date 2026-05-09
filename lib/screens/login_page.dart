@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
+import 'register_page.dart';
 
 class Loginscreen extends StatefulWidget {
   const Loginscreen({super.key});
@@ -8,67 +11,103 @@ class Loginscreen extends StatefulWidget {
 }
 
 class _LoginscreenState extends State<Loginscreen> {
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
-  void _handleLogin() {
-    String username = _usernameController.text.trim();
-    String password = _passwordController.text.trim();
+  Future<void> _handleLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
 
-    if (username.isEmpty || password.isEmpty) {
+    if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter username and password')),
+        const SnackBar(content: Text('Please enter email and password')),
       );
       return;
     }
 
-    Navigator.pushReplacementNamed(context, '/interests');
+    final auth = context.read<AuthProvider>();
+    final success = await auth.signIn(email: email, password: password);
+
+    if (!mounted) return;
+
+    if (success) {
+      final completed = await auth.hasCompletedOnboarding();
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(
+        context, completed ? '/home' : '/interests');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(auth.errorMessage ?? 'Login failed')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     const Color hubColor = Color(0xFF6A11CB);
+    final auth = context.watch<AuthProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Log in Page')),
+      appBar: AppBar(elevation: 0, backgroundColor: Colors.transparent),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text("Welcome to", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30)),
+            const Text("Welcome to", style: TextStyle(
+              fontWeight: FontWeight.bold, fontSize: 30)),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text("CLUB", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 50)),
-                const Text("HUB", style: TextStyle(fontWeight: FontWeight.bold, color: hubColor, fontSize: 50)),
+                const Text("CLUB", style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black, fontSize: 50)),
+                const Text("HUB", style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: hubColor, fontSize: 50)),
               ],
             ),
             const SizedBox(height: 30),
+
+            // EMAIL field (was username)
             Container(
               width: 300,
               padding: const EdgeInsets.symmetric(horizontal: 10),
-              decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(15)),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(15)),
               child: TextField(
-                controller: _usernameController,
-                decoration: const InputDecoration(border: InputBorder.none, hintText: 'Username', icon: Icon(Icons.person)),
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  hintText: 'Email',
+                  icon: Icon(Icons.email)),
               ),
             ),
             const SizedBox(height: 15),
+
+            // PASSWORD field
             Container(
               width: 300,
               padding: const EdgeInsets.symmetric(horizontal: 10),
-              decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(15)),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(15)),
               child: TextField(
                 controller: _passwordController,
                 obscureText: true,
-                decoration: const InputDecoration(border: InputBorder.none, hintText: 'Password', icon: Icon(Icons.lock)),
+                onSubmitted: (_) => auth.isLoading ? null : _handleLogin(),
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  hintText: 'Password',
+                  icon: Icon(Icons.lock)),
               ),
             ),
             const SizedBox(height: 40),
 
             // LOGIN BUTTON
             GestureDetector(
-              onTap: _handleLogin,
+              onTap: auth.isLoading ? null : _handleLogin,
               child: Container(
                 width: 200,
                 height: 50,
@@ -79,38 +118,63 @@ class _LoginscreenState extends State<Loginscreen> {
                     end: Alignment.bottomRight,
                     colors: [Colors.blue, Color(0xFF6A11CB)],
                   ),
-                  boxShadow: [BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5))],
+                  boxShadow: [BoxShadow(
+                    color: Colors.blue.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5))],
                 ),
-                child: const Center(
-                  child: Text("LOGIN", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                child: Center(
+                  child: auth.isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text("LOGIN", style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16)),
                 ),
               ),
             ),
 
             const SizedBox(height: 20),
 
-            // ARE YOU A CLUB? BUTTON
+            // SIGN UP BUTTON
             GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, '/club-login');
-              },
+              onTap: () => Navigator.push(context,
+                MaterialPageRoute(
+                  builder: (_) => const RegisterScreen())),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20, vertical: 12),
                 decoration: BoxDecoration(
                   border: Border.all(color: hubColor, width: 2),
                   borderRadius: BorderRadius.circular(25),
                 ),
-                child: const Text(
-                  "Are you a club? 🎓",
+                child: const Text("Don't have an account? Sign Up",
                   style: TextStyle(
-                    color: Color(0xFF6A11CB),
+                    color: hubColor,
                     fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
+                    fontSize: 14)),
               ),
             ),
 
+            const SizedBox(height: 15),
+
+            // ARE YOU A CLUB BUTTON
+            GestureDetector(
+              onTap: () => Navigator.pushNamed(context, '/club-login'),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20, vertical: 12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: hubColor, width: 2),
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                child: const Text("Are you a club? 🎓",
+                  style: TextStyle(
+                    color: hubColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14)),
+              ),
+            ),
           ],
         ),
       ),

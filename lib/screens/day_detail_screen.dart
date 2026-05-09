@@ -7,7 +7,7 @@ import '../widgets/bottom_nav_bar.dart';
 
 class DayDetailScreen extends StatefulWidget {
   final DateTime day;
-  final List<Event> events;
+  final List<EventModel> events;
 
   const DayDetailScreen({
     super.key,
@@ -20,7 +20,7 @@ class DayDetailScreen extends StatefulWidget {
 }
 
 class _DayDetailScreenState extends State<DayDetailScreen> {
-  late List<Event> _events;
+  late List<EventModel> _events;
 
   final List<String> _monthNames = [
     '', 'January', 'February', 'March', 'April', 'May', 'June',
@@ -156,7 +156,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     );
   }
 
-  Widget _buildEventCard(Event event) {
+  Widget _buildEventCard(EventModel event) {
     final color = _statusColor(event.status);
 
     return Dismissible(
