@@ -15,6 +15,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  String _selectedRole = 'student'; 
+
   Future<void> _handleRegister() async {
     final username = _usernameController.text.trim();
     final email = _emailController.text.trim();
@@ -37,16 +39,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     final auth = context.read<AuthProvider>();
+    
     final success = await auth.signUp(
       email: email,
       password: password,
       username: username,
+      role: _selectedRole, 
     );
 
     if (!mounted) return;
 
     if (success) {
-      Navigator.pushReplacementNamed(context, '/interests');
+      Navigator.pushReplacementNamed(
+        context, 
+        _selectedRole == 'club' ? '/home' : '/interests'
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(auth.errorMessage ?? 'Registration failed')),
@@ -79,19 +86,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     color: hubColor, fontSize: 50)),
                 ],
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
 
-              _buildField(_usernameController,
-                'Username', Icons.person),
+              _buildRoleSelector(hubColor),
+              
+              const SizedBox(height: 20),
+              _buildField(_usernameController, 'Username / Club Name', Icons.person),
               const SizedBox(height: 15),
-              _buildField(_emailController,
-                'Email', Icons.email),
+              _buildField(_emailController, 'Email', Icons.email),
               const SizedBox(height: 15),
-              _buildField(_passwordController,
-                'Password', Icons.lock, obscure: true),
+              _buildField(_passwordController, 'Password', Icons.lock, obscure: true),
               const SizedBox(height: 15),
-              _buildField(_confirmPasswordController,
-                'Confirm Password', Icons.lock_outline, obscure: true),
+              _buildField(_confirmPasswordController, 'Confirm Password', Icons.lock_outline, obscure: true),
               const SizedBox(height: 40),
 
               // REGISTER BUTTON
@@ -103,45 +109,53 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(25),
                     gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
                       colors: [Colors.blue, Color(0xFF6A11CB)],
                     ),
-                    boxShadow: [BoxShadow(
-                      color: Colors.blue.withOpacity(0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5))],
                   ),
                   child: Center(
                     child: auth.isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("REGISTER",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16)),
+                      : const Text("REGISTER", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              // Already have account
               GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: const Text(
-                  "Already have an account? Log in",
-                  style: TextStyle(
-                    color: hubColor,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
+                child: const Text("Already have an account? Log in", style: TextStyle(color: hubColor, fontWeight: FontWeight.w600)),
               ),
               const SizedBox(height: 30),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildRoleSelector(Color color) {
+    return Container(
+      width: 300,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: ChoiceChip(
+              label: const Text("Student"),
+              selected: _selectedRole == 'student',
+              onSelected: (val) => setState(() => _selectedRole = 'student'),
+            ),
+          ),
+          Expanded(
+            child: ChoiceChip(
+              label: const Text("Club"),
+              selected: _selectedRole == 'club',
+              onSelected: (val) => setState(() => _selectedRole = 'club'),
+            ),
+          ),
+        ],
       ),
     );
   }
