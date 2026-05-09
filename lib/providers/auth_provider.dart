@@ -24,9 +24,15 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _status == AuthStatus.authenticated;
 
   AuthProvider() {
-    // Listen to Firebase auth state changes
-    _authService.authStateChanges.listen(_onAuthStateChanged);
-  }
+  _authService.authStateChanges.listen(_onAuthStateChanged);
+  // Safety: if still unknown after 5 seconds, set unauthenticated
+  Future.delayed(const Duration(seconds: 5), () {
+    if (_status == AuthStatus.unknown) {
+      _status = AuthStatus.unauthenticated;
+      notifyListeners();
+    }
+  });
+}
 
   Future<void> _onAuthStateChanged(User? user) async {
     _firebaseUser = user;

@@ -26,7 +26,7 @@ import 'services/club_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await ClubService().seedClubs(); // seeds clubs once
+  ClubService().seedClubs(); // fire and forget, non-blocking
   runApp(const MyApp());
 }
 
