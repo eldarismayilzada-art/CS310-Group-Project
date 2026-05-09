@@ -25,16 +25,26 @@ class _LoginscreenState extends State<Loginscreen> {
       return;
     }
 
+    FocusScope.of(context).unfocus();
+
     final auth = context.read<AuthProvider>();
     final success = await auth.signIn(email: email, password: password);
 
     if (!mounted) return;
 
     if (success) {
+      final isClub = auth.userModel?.role == 'club';
+
       final completed = await auth.hasCompletedOnboarding();
+      
       if (!mounted) return;
-      Navigator.pushReplacementNamed(
-        context, completed ? '/home' : '/interests');
+
+      if (isClub) {
+        Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        Navigator.pushReplacementNamed(
+            context, completed ? '/home' : '/interests');
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(auth.errorMessage ?? 'Login failed')),
@@ -50,133 +60,127 @@ class _LoginscreenState extends State<Loginscreen> {
     return Scaffold(
       appBar: AppBar(elevation: 0, backgroundColor: Colors.transparent),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text("Welcome to", style: TextStyle(
-              fontWeight: FontWeight.bold, fontSize: 30)),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text("CLUB", style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black, fontSize: 50)),
-                const Text("HUB", style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: hubColor, fontSize: 50)),
-              ],
-            ),
-            const SizedBox(height: 30),
+        child: SingleChildScrollView( // Klavye açıldığında ekranın taşmasını önler
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text("Welcome to", style: TextStyle(
+                fontWeight: FontWeight.bold, fontSize: 30)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("CLUB", style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black, fontSize: 50)),
+                  const Text("HUB", style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: hubColor, fontSize: 50)),
+                ],
+              ),
+              const SizedBox(height: 30),
 
-            // EMAIL field (was username)
-            Container(
-              width: 300,
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(15)),
-              child: TextField(
+              _buildTextField(
                 controller: _emailController,
+                hintText: 'Email',
+                icon: Icons.email,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  hintText: 'Email',
-                  icon: Icon(Icons.email)),
               ),
-            ),
-            const SizedBox(height: 15),
+              const SizedBox(height: 15),
 
-            // PASSWORD field
-            Container(
-              width: 300,
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(15)),
-              child: TextField(
+              _buildTextField(
                 controller: _passwordController,
+                hintText: 'Password',
+                icon: Icons.lock,
                 obscureText: true,
-                onSubmitted: (_) => auth.isLoading ? null : _handleLogin(),
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  hintText: 'Password',
-                  icon: Icon(Icons.lock)),
               ),
-            ),
-            const SizedBox(height: 40),
+              const SizedBox(height: 40),
 
-            // LOGIN BUTTON
-            GestureDetector(
-              onTap: auth.isLoading ? null : _handleLogin,
-              child: Container(
-                width: 200,
-                height: 50,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(25),
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Colors.blue, Color(0xFF6A11CB)],
+              GestureDetector(
+                onTap: auth.isLoading ? null : _handleLogin,
+                child: Container(
+                  width: 200,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(25),
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Colors.blue, Color(0xFF6A11CB)],
+                    ),
+                    boxShadow: [BoxShadow(
+                      color: Colors.blue.withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5))],
                   ),
-                  boxShadow: [BoxShadow(
-                    color: Colors.blue.withOpacity(0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5))],
-                ),
-                child: Center(
-                  child: auth.isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text("LOGIN", style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16)),
+                  child: Center(
+                    child: auth.isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text("LOGIN", style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16)),
+                  ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 25),
 
-            // SIGN UP BUTTON
-            GestureDetector(
-              onTap: () => Navigator.push(context,
-                MaterialPageRoute(
-                  builder: (_) => const RegisterScreen())),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(
-                  border: Border.all(color: hubColor, width: 2),
-                  borderRadius: BorderRadius.circular(25),
+              GestureDetector(
+                onTap: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const RegisterScreen())),
+                child: RichText(
+                  text: const TextSpan(
+                    style: TextStyle(color: Colors.black, fontSize: 14),
+                    children: [
+                      TextSpan(text: "Don't have an account? "),
+                      TextSpan(
+                        text: "Sign Up",
+                        style: TextStyle(color: hubColor, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
                 ),
-                child: const Text("Don't have an account? Sign Up",
-                  style: TextStyle(
-                    color: hubColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14)),
               ),
-            ),
 
-            const SizedBox(height: 15),
+              const SizedBox(height: 20),
 
-            // ARE YOU A CLUB BUTTON
-            GestureDetector(
-              onTap: () => Navigator.pushNamed(context, '/club-login'),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20, vertical: 12),
-                decoration: BoxDecoration(
-                  border: Border.all(color: hubColor, width: 2),
-                  borderRadius: BorderRadius.circular(25),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 40),
+                child: Text(
+                  "Clubs should use their institutional email to log in.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
                 ),
-                child: const Text("Are you a club? 🎓",
-                  style: TextStyle(
-                    color: hubColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14)),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hintText,
+    required IconData icon,
+    bool obscureText = false,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return Container(
+      width: 300,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(15)),
+      child: TextField(
+        controller: controller,
+        obscureText: obscureText,
+        keyboardType: keyboardType,
+        onSubmitted: (_) => _handleLogin(),
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          hintText: hintText,
+          icon: Icon(icon)),
       ),
     );
   }
