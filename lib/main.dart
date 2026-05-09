@@ -72,8 +72,8 @@ class MyApp extends StatelessWidget {
             '/post/edit': (ctx) => const EditPostScreen(),
             '/settings': (ctx) => SettingsScreen(),
             '/comments': (ctx) => const CommentsPage(
-              postI: 'post_123',
-              postOwnerName: 'Club_name',
+              postI: '',
+              postOwnerName: '',
             ),
           },
         ),
