@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "900801684873",
+    "project_id": "clubhub-52543",
+    "storage_bucket": "clubhub-52543.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:900801684873:android:bf53183f58e0bc3725ed58",
+        "android_client_info": {
+          "package_name": "com.example.clubhub"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB0UY1GDDZSrsDnAaT3_7inkJVQ92n-PkM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -15,19 +15,23 @@ class CalendarScreen extends StatefulWidget {
 class _CalendarScreenState extends State<CalendarScreen> {
   DateTime _focusedMonth = DateTime.now();
 
-  final List<Event> _events = [
-    Event(id: '1', title: 'Chess Club Meeting', clubName: 'Chess Club',
+  final List<EventModel> _events = [
+    EventModel(id: '1', title: 'Chess Club Meeting', clubName: 'Chess Club',
       date: DateTime(2026, 4, 12), time: '14:00',
-      status: AttendanceStatus.attending),
-    Event(id: '2', title: 'Photography Walk', clubName: 'Photo Society',
+      status: AttendanceStatus.attending,
+      createdBy: 'system', createdAt: DateTime(2026, 4, 1)),
+    EventModel(id: '2', title: 'Photography Walk', clubName: 'Photo Society',
       date: DateTime(2026, 4, 15), time: '10:00',
-      status: AttendanceStatus.maybe),
-    Event(id: '3', title: 'Debate Finals', clubName: 'Debate Club',
+      status: AttendanceStatus.maybe,
+      createdBy: 'system', createdAt: DateTime(2026, 4, 1)),
+    EventModel(id: '3', title: 'Debate Finals', clubName: 'Debate Club',
       date: DateTime(2026, 4, 15), time: '16:00',
-      status: AttendanceStatus.attending),
-    Event(id: '4', title: 'Art Exhibition', clubName: 'Art Club',
+      status: AttendanceStatus.attending,
+      createdBy: 'system', createdAt: DateTime(2026, 4, 1)),
+    EventModel(id: '4', title: 'Art Exhibition', clubName: 'Art Club',
       date: DateTime(2026, 4, 22), time: '11:00',
-      status: AttendanceStatus.notAttending),
+      status: AttendanceStatus.notAttending,
+      createdBy: 'system', createdAt: DateTime(2026, 4, 1)),
   ];
 
   final List<String> _monthNames = [
@@ -35,7 +39,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
-  List<Event> _eventsForDay(DateTime day) => _events.where((e) =>
+  List<EventModel> _eventsForDay(DateTime day) => _events.where((e) =>
     e.date.year == day.year &&
     e.date.month == day.month &&
     e.date.day == day.day).toList();

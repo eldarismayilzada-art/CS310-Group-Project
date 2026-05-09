@@ -1,36 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import '../utils/app_colors.dart';
 import '../widgets/bottom_nav_bar.dart';
 
-// ─────────────────────────────────────────────
-// MODEL
-// ─────────────────────────────────────────────
-class StudentUser {
-  final String username;
-  final String? avatarUrl;
-  final List<String> interests;
-
-  const StudentUser({
-    required this.username,
-    this.avatarUrl,
-    this.interests = const [],
-  });
-}
-
-// ─────────────────────────────────────────────
-// SCREEN
-// ─────────────────────────────────────────────
 class StudentProfileScreen extends StatelessWidget {
   const StudentProfileScreen({super.key});
 
-  static const _demoUser = StudentUser(
-    username: 'aylin.aksu',
-    avatarUrl: null,
-    interests: ['Physics', 'Astronomy', 'Gym', 'Aviation'],
-  );
-
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final user = auth.userModel;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F3FF),
       appBar: AppBar(
@@ -56,118 +37,112 @@ class StudentProfileScreen extends StatelessWidget {
             icon: const Icon(Icons.search_rounded, color: Colors.white),
             onPressed: () {},
           ),
+          // LOGOUT
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            onPressed: () async {
+              await auth.signOut();
+            },
+          ),
         ],
       ),
       drawer: const _SideDrawer(),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              _AvatarSection(user: _demoUser),
-              const SizedBox(height: 16),
-              Text(
-                '@${_demoUser.username}',
-                style: const TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
+      body: user == null
+        ? const Center(child: CircularProgressIndicator())
+        : Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24, vertical: 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Avatar
+                  CircleAvatar(
+                    radius: 52,
+                    backgroundColor:
+                        AppColors.primary.withOpacity(0.15),
+                    backgroundImage: user.avatarUrl != null
+                        ? NetworkImage(user.avatarUrl!)
+                        : null,
+                    child: user.avatarUrl == null
+                        ? const Icon(Icons.person_rounded,
+                            size: 56, color: AppColors.primary)
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Username
+                  Text(
+                    '@${user.username}',
+                    style: const TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+
+                  // Bio
+                  if (user.bio.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      user.bio,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 32),
+
+                  // Interests
+                  if (user.interests.isNotEmpty) ...[
+                    const Text(
+                      'INTERESTS',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.center,
+                      children: user.interests.map((i) =>
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(i,
+                            style: const TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            )),
+                        ),
+                      ).toList(),
+                    ),
+                  ],
+                ],
               ),
-              const SizedBox(height: 32),
-              _InterestsSection(interests: _demoUser.interests),
-            ],
+            ),
           ),
-        ),
-      ),
       bottomNavigationBar: const AppBottomNavBar(currentIndex: 0),
     );
   }
 }
 
-// ─────────────────────────────────────────────
-// SUB-WIDGETS
-// ─────────────────────────────────────────────
-
-class _AvatarSection extends StatelessWidget {
-  const _AvatarSection({required this.user});
-  final StudentUser user;
-
-  @override
-  Widget build(BuildContext context) {
-    return CircleAvatar(
-      radius: 52,
-      backgroundColor: AppColors.primary.withOpacity(0.15),
-      backgroundImage:
-          user.avatarUrl != null ? NetworkImage(user.avatarUrl!) : null,
-      child: user.avatarUrl == null
-          ? const Icon(Icons.person_rounded, size: 56, color: AppColors.primary)
-          : null,
-    );
-  }
-}
-
-class _InterestsSection extends StatelessWidget {
-  const _InterestsSection({required this.interests});
-  final List<String> interests;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        const Text(
-          'INTERESTS',
-          style: TextStyle(
-            fontFamily: 'Poppins',
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textSecondary,
-            letterSpacing: 0.8,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          alignment: WrapAlignment.center,
-          children: interests.map((i) => _InterestChip(label: i)).toList(),
-        ),
-      ],
-    );
-  }
-}
-
-class _InterestChip extends StatelessWidget {
-  const _InterestChip({required this.label});
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontFamily: 'Poppins',
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: AppColors.primary,
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// SIDE DRAWER
-// ─────────────────────────────────────────────
 class _SideDrawer extends StatelessWidget {
   const _SideDrawer();
 
@@ -193,7 +168,7 @@ class _SideDrawer extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               color: AppColors.primary,
               child: const Text(
-                'ClubConnect',
+                'ClubHub',
                 style: TextStyle(
                   fontFamily: 'Poppins',
                   fontSize: 22,
@@ -203,20 +178,33 @@ class _SideDrawer extends StatelessWidget {
               ),
             ),
             ...items.map((item) => ListTile(
-                  leading: Icon(item.icon, color: AppColors.primary),
-                  title: Text(
-                    item.label,
-                    style: const TextStyle(
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, item.route);
-                  },
+              leading: Icon(item.icon, color: AppColors.primary),
+              title: Text(item.label,
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
                 )),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, item.route);
+              },
+            )),
+            const Spacer(),
+            // Logout at bottom of drawer
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text('Logout',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontWeight: FontWeight.w500,
+                  color: Colors.red,
+                )),
+              onTap: () async {
+                Navigator.pop(context);
+                await context.read<AuthProvider>().signOut();
+              },
+            ),
           ],
         ),
       ),
