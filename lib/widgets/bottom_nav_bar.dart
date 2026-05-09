@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; 
 import '../utils/app_colors.dart';
 import '../providers/auth_provider.dart';
+import '../providers/theme_provider.dart'; 
 
 class AppBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -28,7 +29,15 @@ class AppBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final themeProvider = context.watch<ThemeProvider>(); 
+    
     final bool isClub = auth.userModel?.role == 'club';
+    final bool isDark = themeProvider.isDarkMode;
+
+    // Temaya göre renkleri belirle
+    final backgroundColor = isDark ? const Color(0xFF1E1E2E) : Colors.white;
+    final inactiveColor = isDark ? Colors.white54 : const Color(0xFFAAAAAA);
+    final shadowColor = isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.08);
 
     final items = [
       _NavItem(icon: Icons.person_rounded, label: 'Profile'),
@@ -42,10 +51,10 @@ class AppBottomNavBar extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: backgroundColor, 
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: shadowColor, 
             blurRadius: 12, 
             offset: const Offset(0, -3),
           ),
@@ -80,7 +89,7 @@ class AppBottomNavBar extends StatelessWidget {
                           child: Icon(items[i].icon,
                               color: active
                                   ? AppColors.primary
-                                  : const Color(0xFFAAAAAA),
+                                  : inactiveColor, 
                               size: 24),
                         ),
                         const SizedBox(height: 2),
@@ -92,7 +101,7 @@ class AppBottomNavBar extends StatelessWidget {
                                   active ? FontWeight.w700 : FontWeight.w400,
                               color: active
                                   ? AppColors.primary
-                                  : const Color(0xFFAAAAAA),
+                                  : inactiveColor, 
                             )),
                       ],
                     ),
