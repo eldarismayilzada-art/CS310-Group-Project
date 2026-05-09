@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 
 class InterestScreen extends StatefulWidget {
-  const InterestScreen({super.key});
+  final bool isSettings;
+  const InterestScreen({super.key, this.isSettings = false});
 
   @override
   State<InterestScreen> createState() => _InterestScreenState();
@@ -20,6 +21,21 @@ class _InterestScreenState extends State<InterestScreen> {
 
   final Set<String> _selected = {};
 
+  @override
+  void initState() {
+    super.initState();
+    // Sayfa açıldığında mevcut kullanıcı verilerini yükle
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = context.read<AuthProvider>().userModel;
+      if (user != null) {
+        setState(() {
+          _bioController.text = user.bio;
+          _selected.addAll(user.interests);
+        });
+      }
+    });
+  }
+
   Future<void> _handleContinue() async {
     if (_selected.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -35,24 +51,45 @@ class _InterestScreenState extends State<InterestScreen> {
     );
 
     if (!mounted) return;
-    Navigator.pushReplacementNamed(context, '/home');
+
+    if (widget.isSettings) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Interests updated successfully!')),
+      );
+    } else {
+      Navigator.pushReplacementNamed(context, '/home');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     const Color hubColor = Color(0xFF6A11CB);
     final auth = context.watch<AuthProvider>();
+   
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black;
+    final secondaryTextColor = isDark ? Colors.white70 : Colors.black87;
+    final chipBackground = isDark ? Colors.grey[800] : Colors.grey[200];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Your Interests')),
-      body: Padding(
+      appBar: AppBar(
+        title: const Text('Your Interests'),
+        automaticallyImplyLeading: widget.isSettings,
+        leading: widget.isSettings ? null : Container(),
+      ),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Please choose your INTERESTS!!',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+              style: TextStyle(
+                fontWeight: FontWeight.bold, 
+                fontSize: 22,
+                color: textColor, 
+              ),
             ),
             const SizedBox(height: 20),
             Wrap(
@@ -69,16 +106,15 @@ class _InterestScreenState extends State<InterestScreen> {
                     }
                   }),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     decoration: BoxDecoration(
-                      color: isSelected ? hubColor : Colors.grey[200],
+                      color: isSelected ? hubColor : chipBackground,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       interest,
                       style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black,
+                        color: isSelected ? Colors.white : textColor, 
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -87,28 +123,35 @@ class _InterestScreenState extends State<InterestScreen> {
               }).toList(),
             ),
             const SizedBox(height: 30),
-            const Text(
+            Text(
               'Anything you want to tell about yourself?',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(
+                fontWeight: FontWeight.bold, 
+                fontSize: 16,
+                color: textColor, // Dinamik renk
+              ),
             ),
             const SizedBox(height: 10),
             Container(
               decoration: BoxDecoration(
-                color: Colors.grey[200],
+                color: chipBackground, 
                 borderRadius: BorderRadius.circular(15),
               ),
               child: TextField(
                 controller: _bioController,
                 maxLines: 4,
                 maxLength: 200,
-                decoration: const InputDecoration(
+                style: TextStyle(color: textColor), 
+                decoration: InputDecoration(
                   border: InputBorder.none,
                   hintText: 'Tell us about yourself...',
-                  contentPadding: EdgeInsets.all(15),
+                  hintStyle: TextStyle(color: isDark ? Colors.white54 : Colors.grey),
+                  contentPadding: const EdgeInsets.all(15),
                 ),
               ),
             ),
             const SizedBox(height: 30),
+           
             Center(
               child: GestureDetector(
                 onTap: auth.isLoading ? null : _handleContinue,
@@ -118,23 +161,16 @@ class _InterestScreenState extends State<InterestScreen> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(25),
                     gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Colors.blue, Color(0xFF6A11CB)],
+                      colors: [Colors.blue, hubColor],
                     ),
-                    boxShadow: [BoxShadow(
-                      color: Colors.blue.withOpacity(0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5))],
                   ),
                   child: Center(
                     child: auth.isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('CONTINUE ▶▶',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16)),
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : Text(
+                            widget.isSettings ? 'SAVE CHANGES' : 'CONTINUE ▶▶',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
                   ),
                 ),
               ),
