@@ -13,6 +13,13 @@ class EventProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
+  // Hata mesajını temizlemek için yardımcı metod
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  // Belirli bir güne ait etkinlikleri filtrele
   List<EventModel> eventsForDay(DateTime day) {
     return _events.where((e) =>
       e.date.year == day.year &&
@@ -20,13 +27,15 @@ class EventProvider extends ChangeNotifier {
       e.date.day == day.day).toList();
   }
 
+  // DÜZELTİLDİ: getEvents -> getEventsByClub olarak güncellendi
   void listenToEvents(String userId) {
     _isLoading = true;
+    _errorMessage = null; // Yeni dinleme başladığında hatayı sıfırla
     notifyListeners();
 
-    _eventService.getEvents(userId).listen(
-      (events) {
-        _events = events;
+    _eventService.getEventsByClub(userId).listen(
+      (eventList) {
+        _events = eventList;
         _isLoading = false;
         notifyListeners();
       },
@@ -38,17 +47,30 @@ class EventProvider extends ChangeNotifier {
     );
   }
 
+  // Tüm etkinlikleri dinlemek için (Öğrenciler için gerekebilir)
+  void listenToAllEvents() {
+    _isLoading = true;
+    notifyListeners();
+
+    _eventService.getAllEvents().listen((eventList) {
+      _events = eventList;
+      _isLoading = false;
+      notifyListeners();
+    });
+  }
+
   Future<void> createEvent(EventModel event) async {
     try {
+      _errorMessage = null;
       await _eventService.createEvent(event);
     } catch (e) {
       _errorMessage = e.toString();
       notifyListeners();
+      rethrow; // UI katmanında da yakalamak istersen
     }
   }
 
-  Future<void> updateStatus(
-      String eventId, AttendanceStatus status) async {
+  Future<void> updateStatus(String eventId, AttendanceStatus status) async {
     try {
       await _eventService.updateStatus(eventId, status);
     } catch (e) {
