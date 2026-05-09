@@ -6,10 +6,8 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // Stream of auth state changes
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  // Current user
   User? get currentUser => _auth.currentUser;
 
   // Sign Up
@@ -17,6 +15,7 @@ class AuthService {
     required String email,
     required String password,
     required String username,
+    required String role, 
   }) async {
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
@@ -31,6 +30,7 @@ class AuthService {
         bio: '',
         interests: [],
         createdAt: DateTime.now(),
+        role: role, 
       );
 
       await _db
@@ -41,10 +41,11 @@ class AuthService {
       return user;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthError(e);
+    } catch (e) {
+      throw 'An unexpected error occurred during sign up.';
     }
   }
 
-  // Sign In
   Future<void> signIn({
     required String email,
     required String password,
@@ -59,20 +60,22 @@ class AuthService {
     }
   }
 
-  // Sign Out
   Future<void> signOut() async {
     await _auth.signOut();
   }
 
-  // Check if user has completed onboarding (has interests saved)
   Future<bool> hasCompletedOnboarding(String uid) async {
-    final doc = await _db.collection('users').doc(uid).get();
-    if (!doc.exists) return false;
-    final interests = List<String>.from(doc.data()?['interests'] ?? []);
-    return interests.isNotEmpty;
+    try {
+      final doc = await _db.collection('users').doc(uid).get();
+      if (!doc.exists) return false;
+      
+      final interests = List<String>.from(doc.data()?['interests'] ?? []);
+      return interests.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
   }
 
-  // Save interests & bio after onboarding
   Future<void> saveOnboarding({
     required String uid,
     required List<String> interests,
@@ -84,7 +87,6 @@ class AuthService {
     });
   }
 
-  // Human-readable error messages
   String _handleAuthError(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
@@ -99,8 +101,12 @@ class AuthService {
         return 'Please enter a valid email address.';
       case 'network-request-failed':
         return 'Network error. Check your connection.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      case 'too-many-requests':
+        return 'Too many failed attempts. Try again later.';
       default:
-        return 'Something went wrong. Please try again.';
+        return e.message ?? 'Something went wrong. Please try again.';
     }
   }
 }
