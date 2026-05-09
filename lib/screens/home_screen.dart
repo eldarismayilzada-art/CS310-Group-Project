@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/post_model.dart';
 import '../providers/post_provider.dart';
 import '../providers/auth_provider.dart';
@@ -16,12 +15,15 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final postService = PostService();
+    context.watch<AuthProvider>(); 
 
     return Scaffold(
       backgroundColor: const Color(0xFFF4F3FF),
       drawer: const SideScreen(),
       appBar: AppBar(
         backgroundColor: AppColors.primary,
+        title: const Text("ClubHub", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        centerTitle: true,
         leading: Builder(
           builder: (context) => IconButton(
             icon: const Icon(Icons.menu, color: Colors.white),
@@ -36,6 +38,7 @@ class HomeScreen extends StatelessWidget {
         ],
         elevation: 1,
       ),
+
       body: StreamBuilder<List<PostModel>>(
         stream: postService.getPosts(),
         builder: (context, snapshot) {
@@ -43,36 +46,41 @@ class HomeScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(
+              child: Text(
+                'Error: ${snapshot.error}', 
+                style: const TextStyle(color: Colors.red)
+              )
+            );
           }
+          
           final posts = snapshot.data ?? [];
 
           return Column(
             children: [
               _buildActivityReminders(),
-              const Divider(),
+              const Divider(height: 1),
+              
               posts.isEmpty
-                ? const Expanded(
-                    child: Center(
-                      child: Text(
-                        'No posts yet.\nBe the first to post!',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
-                          fontFamily: 'Poppins',
+                  ? const Expanded(
+                      child: Center(
+                        child: Text(
+                          'No posts yet.\nFollow some clubs to see updates!',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 16, color: Colors.grey, fontFamily: 'Poppins'),
                         ),
                       ),
+                    )
+                  : Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.only(bottom: 20), 
+                        itemCount: posts.length,
+                        physics: const BouncingScrollPhysics(),
+                        itemBuilder: (context, index) {
+                          return _PostCard(post: posts[index]);
+                        },
+                      ),
                     ),
-                  )
-                : Expanded(
-                    child: ListView.builder(
-                      itemCount: posts.length,
-                      itemBuilder: (context, index) {
-                        return _PostCard(post: posts[index]);
-                      },
-                    ),
-                  ),
             ],
           );
         },
@@ -82,17 +90,33 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildActivityReminders() {
-    return SizedBox(
-      height: 100,
+    return Container(
+      height: 110,
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: 5,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        itemCount: 8, 
         itemBuilder: (context, index) {
-          return const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: CircleAvatar(
-              radius: 35,
-              child: CircleAvatar(radius: 32, backgroundColor: Colors.grey),
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.primary, width: 2),
+                  ),
+                  child: const CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Colors.white,
+                    child: Icon(Icons.groups, color: Colors.grey),
+                  ),
+                ),
+                const SizedBox(height: 5),
+                const Text("Club Name", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500)),
+              ],
             ),
           );
         },
@@ -118,59 +142,68 @@ class _PostCard extends StatelessWidget {
       children: [
         ListTile(
           leading: const CircleAvatar(child: Icon(Icons.person)),
-          title: Text(post.clubName,
-            style: const TextStyle(fontFamily: 'Poppins',
-              fontWeight: FontWeight.bold)),
+          title: Text(
+            post.clubName,
+            style: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold)
+          ),
           subtitle: post.location != null
-            ? Text(post.location!,
-                style: const TextStyle(fontSize: 12, color: Colors.grey))
-            : null,
+              ? Text(post.location!, style: const TextStyle(fontSize: 12, color: Colors.grey))
+              : null,
           trailing: isOwner
-            ? PopupMenuButton<String>(
-                onSelected: (value) async {
-                  if (value == 'delete') {
-                    await postProvider.deletePost(post.id);
-                  }
-                },
-                itemBuilder: (_) => [
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Row(children: [
-                      Icon(Icons.delete, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Delete'),
-                    ]),
-                  ),
-                ],
-              )
-            : null,
+              ? PopupMenuButton<String>(
+                  onSelected: (value) async {
+                    if (value == 'delete') {
+                      await postProvider.deletePost(post.id);
+                    }
+                  },
+                  itemBuilder: (_) => [
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(children: [
+                        Icon(Icons.delete, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text('Delete'),
+                      ]),
+                    ),
+                  ],
+                )
+              : null,
         ),
 
-        // Post image
-        post.imageUrl != null
-          ? Image.network(
-              post.imageUrl!,
+        if (post.imageUrl != null)
+          Image.network(
+            post.imageUrl!,
+            height: 250,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Container(
+                height: 250,
+                color: Colors.grey[200],
+                child: const Center(child: CircularProgressIndicator()),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) => Container(
               height: 250,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            )
-          : Container(
-              height: 250,
-              width: double.infinity,
               color: Colors.grey[300],
-              child: const Center(
-                child: Icon(Icons.image, size: 50, color: Colors.grey)),
+              child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
             ),
+          )
+        else
+          Container(
+            height: 250,
+            width: double.infinity,
+            color: Colors.grey[300],
+            child: const Center(child: Icon(Icons.image, size: 50, color: Colors.grey)),
+          ),
 
-        // Caption
         if (post.caption.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            child: Text(post.caption,
-              style: const TextStyle(fontFamily: 'Poppins', fontSize: 13)),
+            child: Text(post.caption, style: const TextStyle(fontFamily: 'Poppins', fontSize: 13)),
           ),
 
-        // Like & Comment row
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
