@@ -23,16 +23,18 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _status == AuthStatus.authenticated;
 
+  bool get isClub => _userModel?.role == 'club';
+  bool get isStudent => _userModel?.role == 'student';
+
   AuthProvider() {
-  _authService.authStateChanges.listen(_onAuthStateChanged);
-  // Safety: if still unknown after 5 seconds, set unauthenticated
-  Future.delayed(const Duration(seconds: 5), () {
-    if (_status == AuthStatus.unknown) {
-      _status = AuthStatus.unauthenticated;
-      notifyListeners();
-    }
-  });
-}
+    _authService.authStateChanges.listen(_onAuthStateChanged);
+    Future.delayed(const Duration(seconds: 5), () {
+      if (_status == AuthStatus.unknown) {
+        _status = AuthStatus.unauthenticated;
+        notifyListeners();
+      }
+    });
+  }
 
   Future<void> _onAuthStateChanged(User? user) async {
     _firebaseUser = user;
@@ -52,24 +54,38 @@ class AuthProvider extends ChangeNotifier {
       if (doc.exists) {
         _userModel = UserModel.fromFirestore(doc);
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint("User model yükleme hatası: $e");
+    }
   }
 
   Future<bool> signUp({
     required String email,
     required String password,
     required String username,
+    required String role, // 'student' or 'club'
   }) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      await _authService.signUp(
-        email: email,
-        password: password,
+      UserCredential credential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
+
+      final newUser = UserModel(
+        id: credential.user!.uid,
         username: username,
+        email: email,
+        bio: '',
+        interests: [],
+        createdAt: DateTime.now(),
+        role: role, 
       );
+
+      await _db.collection('users').doc(newUser.id).set(newUser.toFirestore());
+
+      _userModel = newUser;
       _isLoading = false;
       notifyListeners();
       return true;
@@ -90,7 +106,9 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _authService.signIn(email: email, password: password);
+      await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
+      
       _isLoading = false;
       notifyListeners();
       return true;
@@ -103,12 +121,19 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
-    await _authService.signOut();
+    await FirebaseAuth.instance.signOut();
+    _status = AuthStatus.unauthenticated;
+    _userModel = null;
+    notifyListeners();
   }
 
   Future<bool> hasCompletedOnboarding() async {
     if (_firebaseUser == null) return false;
-    return _authService.hasCompletedOnboarding(_firebaseUser!.uid);
+  
+    if (_userModel != null) {
+      return _userModel!.interests.isNotEmpty;
+    }
+    return false;
   }
 
   Future<void> saveOnboarding({
@@ -116,11 +141,12 @@ class AuthProvider extends ChangeNotifier {
     required String bio,
   }) async {
     if (_firebaseUser == null) return;
-    await _authService.saveOnboarding(
-      uid: _firebaseUser!.uid,
-      interests: interests,
-      bio: bio,
-    );
+    
+    await _db.collection('users').doc(_firebaseUser!.uid).update({
+      'interests': interests,
+      'bio': bio,
+    });
+    
     await _loadUserModel(_firebaseUser!.uid);
     notifyListeners();
   }
