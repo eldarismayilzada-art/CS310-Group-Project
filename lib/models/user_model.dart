@@ -10,6 +10,7 @@ class UserModel {
   final String? grade;
   final String? dateOfBirth;
   final DateTime createdAt;
+  final String role; // "student" veya "club"
 
   UserModel({
     required this.id,
@@ -21,6 +22,7 @@ class UserModel {
     this.grade,
     this.dateOfBirth,
     required this.createdAt,
+    required this.role,
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
@@ -35,6 +37,7 @@ class UserModel {
       grade: data['grade'],
       dateOfBirth: data['dateOfBirth'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
+      role: data['role'] ?? 'student',
     );
   }
 
@@ -49,6 +52,7 @@ class UserModel {
       'grade': grade,
       'dateOfBirth': dateOfBirth,
       'createdAt': Timestamp.fromDate(createdAt),
+      'role': role,
     };
   }
 }
