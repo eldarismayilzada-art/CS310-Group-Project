@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
+import 'interest_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -27,7 +28,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    // Pre-fill with current user data
     final user = context.read<AuthProvider>().userModel;
     if (user != null) {
       _usernameController.text = user.username;
@@ -92,7 +92,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (picked != null) {
       setState(() {
         _dobController.text =
-          '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+            '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
       });
     }
   }
@@ -113,7 +113,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         'bio': _bioController.text.trim(),
       });
 
-      // Reload user model
       await auth.saveOnboarding(
         interests: auth.userModel?.interests ?? [],
         bio: _bioController.text.trim(),
@@ -152,31 +151,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: CircleAvatar(
                   radius: 50,
                   backgroundImage: _selectedImage != null
-                    ? FileImage(File(_selectedImage!.path))
-                    : (user?.avatarUrl != null
-                        ? NetworkImage(user!.avatarUrl!) as ImageProvider
-                        : null),
+                      ? FileImage(File(_selectedImage!.path))
+                      : (user?.avatarUrl != null
+                          ? NetworkImage(user!.avatarUrl!) as ImageProvider
+                          : null),
                   child: (_selectedImage == null && user?.avatarUrl == null)
-                    ? const Icon(Icons.person, size: 50)
-                    : null,
+                      ? const Icon(Icons.person, size: 50)
+                      : null,
                 ),
               ),
               const SizedBox(height: 10),
               const Text('Tap profile picture to change'),
               const SizedBox(height: 24),
 
-              // Dark mode toggle
+              // Theme Switch
               Card(
                 child: SwitchListTile(
                   secondary: const Icon(Icons.dark_mode),
                   title: const Text('Dark Mode',
-                    style: TextStyle(fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w600)),
+                      style: TextStyle(fontWeight: FontWeight.w600)),
                   value: themeProvider.isDarkMode,
                   onChanged: (_) => themeProvider.toggleTheme(),
                 ),
               ),
-              const SizedBox(height: 16),
+              
+              const SizedBox(height: 12),
+
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.favorite, color: Colors.purple),
+                  title: const Text('Edit Interests & Bio',
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Update what you love'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    // InterestScreen Ayarlar modunda (isSettings: true) açılır
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const InterestScreen(isSettings: true),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 24),
 
               // Username
               TextFormField(
@@ -184,6 +204,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Username',
                   border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.person_outline),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -205,39 +226,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   suffixIcon: Icon(Icons.calendar_today),
                 ),
               ),
-              const SizedBox(height: 16),
-
-              // Bio
-              TextFormField(
-                controller: _bioController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Bio',
-                  border: OutlineInputBorder(),
-                ),
-              ),
               const SizedBox(height: 24),
 
               // Save button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
+                  ),
                   onPressed: _isSaving ? null : _saveProfile,
                   child: _isSaving
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Save Changes'),
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Text('Save Basic Info'),
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 32),
+              const Divider(),
 
               // Logout button
               SizedBox(
                 width: double.infinity,
-                child: OutlinedButton.icon(
+                child: TextButton.icon(
                   icon: const Icon(Icons.logout, color: Colors.red),
-                  label: const Text('Logout',
-                    style: TextStyle(color: Colors.red)),
+                  label: const Text('Logout', style: TextStyle(color: Colors.red)),
                   onPressed: () async {
                     await auth.signOut();
                   },
