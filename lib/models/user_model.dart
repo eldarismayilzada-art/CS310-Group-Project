@@ -10,7 +10,7 @@ class UserModel {
   final String? grade;
   final String? dateOfBirth;
   final DateTime createdAt;
-  final String role; // "student" veya "club"
+  final String role; // "student" or "club"
 
   UserModel({
     required this.id,
