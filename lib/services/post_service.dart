@@ -12,7 +12,7 @@ class PostService {
       id: ref.id,
       clubName: post.clubName,
       caption: post.caption,
-      imageUrl: post.imageUrl,
+      imagePath: post.imagePath,
       location: post.location,
       likes: [],
       createdBy: post.createdBy,

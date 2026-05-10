@@ -40,7 +40,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 borderRadius: BorderRadius.circular(16),
                 color: Colors.grey.shade200,
                 image: DecorationImage(
-                  image: NetworkImage(img_selected),
+                  image: AssetImage(img_selected),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -90,7 +90,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                         ),
                         borderRadius: BorderRadius.circular(12),
                         image: DecorationImage(
-                          image: NetworkImage(fakeimages[index]),
+                          image: AssetImage(fakeimages[index]),
                           fit: BoxFit.cover,
                         ),
                       ),

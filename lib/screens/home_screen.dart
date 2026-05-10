@@ -189,9 +189,9 @@ class _PostCard extends StatelessWidget {
               : null,
         ),
         
-        if (post.imageUrl != null)
+        if (post.imagePath != null)
           Image.network(
-            post.imageUrl!,
+            post.imagePath!,
             height: 250,
             width: double.infinity,
             fit: BoxFit.cover,
