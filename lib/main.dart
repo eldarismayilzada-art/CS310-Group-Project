@@ -73,9 +73,10 @@ class MyApp extends StatelessWidget {
             '/post/pick': (ctx) => const CreatePostScreen(),
             '/post/edit': (ctx) => const EditPostScreen(),
             '/settings': (ctx) => SettingsScreen(),
-            '/comments': (ctx) => const CommentsPage(
-              postI: '',
-              postOwnerName: '',
+            '/comments': (ctx) => const PlaceholderScreen(
+              title: 'Comments',
+              navIndex: 2,
+              icon: Icons.comment_rounded,
             ),
           },
         ),
