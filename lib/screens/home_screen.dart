@@ -237,12 +237,18 @@ class _PostCard extends StatelessWidget {
               const SizedBox(width: 15),
               IconButton(
                 icon: Icon(Icons.chat_bubble_outline, color: subText),
-                onPressed: () => Navigator.push(context, MaterialPageRoute(
-                  builder: (_) => CommentsPage(postI: post.id, postOwnerName: post.clubName))),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CommentsPage(
+                        postI: post.i,
+                        postOwnerName: post.clubName,
               ),
-            ],
+            ),
           ),
-        ),
+                },
+                ),
         Divider(color: isDark ? Colors.white10 : Colors.black12),
       ],
     );
