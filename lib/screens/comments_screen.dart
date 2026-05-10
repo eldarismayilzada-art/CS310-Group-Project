@@ -43,37 +43,8 @@ class _CommentsPageState extends State<CommentsPage> {
     Colors.orange,
   ];
 
-  // Replace this with backend data later
-  final List<CommentModel> _comments = [
-    CommentModel(
-      id: '1',
-      postI: 'post_123',
-      text: 'This is an older comment.',
-      authorName: 'Ayşe',
-      createdAt: DateTime.now().subtract(const Duration(hours: 4)),
-      fontSize: 15,
-      textColor: Colors.black,
-      fontFamily: 'Roboto',
-    ),
-    CommentModel(
-      id: '2',
-      postI: 'post_123',
-      text: 'This one is newer.',
-      authorName: 'Mehmet',
-      createdAt: DateTime.now().subtract(const Duration(hours: 1)),
-      fontSize: 17,
-      textColor: Colors.blue,
-      fontFamily: 'Arial',
-    ),
-  ];
 
-  List<CommentModel> get _filteredComments {
-    final commentsForPost =
-        _comments.where((comment) => comment.postI == widget.postI).toList();
 
-    commentsForPost.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    return commentsForPost;
-  }
 
   @override
   void dispose() {
@@ -427,7 +398,7 @@ Future<void> _postComment() async {
       children: [
         Expanded(
           child: StreamBuilder<List<CommentModel>>(
-            stream: context.read<CommentProvider>().commentsStream(widget.postId),
+            stream: context.read<CommentProvider>().commentsStream(widget.postI),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -462,4 +433,5 @@ Future<void> _postComment() async {
       ),
     );
   }
+}
 
