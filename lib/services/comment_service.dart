@@ -4,12 +4,12 @@ import '../models/comment_model.dart';
 class CommentService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  CollectionReference<Map<String, dynamic>> _commentsRef(String postId) {
-    return _db.collection('posts').doc(postId).collection('comments');
+  CollectionReference<Map<String, dynamic>> _commentsRef(String postI) {
+    return _db.collection('posts').doc(postI).collection('comments');
   }
 
-  Stream<List<CommentModel>> getComments(String postId) {
-    return _commentsRef(postId)
+  Stream<List<CommentModel>> getComments(String postI) {
+    return _commentsRef(postI)
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map(
@@ -20,11 +20,11 @@ class CommentService {
   }
 
   Future<void> createComment(CommentModel comment) async {
-    final ref = _commentsRef(comment.postId).doc();
+    final ref = _commentsRef(comment.postI).doc();
 
     final newComment = CommentModel(
       id: ref.id,
-      postId: comment.postId,
+      postI: comment.postI,
       text: comment.text,
       authorName: comment.authorName,
       createdBy: comment.createdBy,
@@ -38,14 +38,14 @@ class CommentService {
   }
 
   Future<void> updateComment({
-    required String postId,
+    required String postI,
     required String commentId,
     required String text,
     required double fontSize,
     required int textColor,
     required String fontFamily,
   }) async {
-    await _commentsRef(postId).doc(commentId).update({
+    await _commentsRef(postI).doc(commentId).update({
       'text': text,
       'fontSize': fontSize,
       'textColor': textColor,
@@ -54,9 +54,9 @@ class CommentService {
   }
 
   Future<void> deleteComment({
-    required String postId,
+    required String postI,
     required String commentId,
   }) async {
-    await _commentsRef(postId).doc(commentId).delete();
+    await _commentsRef(postI).doc(commentId).delete();
   }
 }
