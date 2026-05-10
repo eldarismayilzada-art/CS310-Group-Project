@@ -87,33 +87,58 @@ class _CommentsPageState extends State<CommentsPage> {
     });
   }
 
-  void _postComment() {
-    final text = _commentController.text.trim();
+Future<void> _postComment() async {
+  final text = _commentController.text.trim();
 
-    if (text.isEmpty) return;
+  if (text.isEmpty) return;
 
-    final newComment = CommentModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      postI: widget.postI,
-      text: text,
-      authorName: 'Current User',
-      createdAt: DateTime.now(),
-      fontSize: _selectedFontSize,
-      textColor: _selectedColor,
-      fontFamily: _selectedFontFamily,
+  final auth = context.read<AuthProvider>();
+  final commentProvider = context.read<CommentProvider>();
+
+  final userId = auth.firebaseUser?.uid;
+  final username = auth.userModel?.username ?? 'Unknown User';
+
+  if (userId == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('You must be logged in to comment.')),
     );
+    return;
+  }
 
+  final newComment = CommentModel(
+    id: '',
+    postI: widget.postI,
+    text: text,
+    authorName: username,
+    createdBy: userId,
+    createdAt: DateTime.now(),
+    fontSize: _selectedFontSize,
+    textColor: _selectedColor.value,
+    fontFamily: _selectedFontFamily,
+  );
+
+  final success = await commentProvider.createComment(newComment);
+
+  if (!mounted) return;
+
+  if (success) {
     setState(() {
-      _comments.insert(0, newComment);
       _commentController.clear();
       _isExpanded = false;
       _selectedFontSize = 16;
       _selectedColor = Colors.black;
       _selectedFontFamily = 'Roboto';
     });
-
-    // Later: send to Firebase / backend here
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          commentProvider.errorMessage ?? 'Failed to post comment.',
+        ),
+      ),
+    );
   }
+}
 
   String _formatTime(DateTime time) {
     final now = DateTime.now();
@@ -174,7 +199,7 @@ class _CommentsPageState extends State<CommentsPage> {
             comment.text,
             style: TextStyle(
               fontSize: comment.fontSize,
-              color: comment.textColor,
+              color: Color(comment.textColor),
               fontFamily: comment.fontFamily,
             ),
           ),
@@ -394,31 +419,47 @@ class _CommentsPageState extends State<CommentsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final comments = _filteredComments;
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Comments'),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: comments.isEmpty
-                ? const Center(
-                    child: Text('No comments yet. Be the first to comment!'),
-                  )
-                : ListView.builder(
-                    reverse: false,
-                    padding: const EdgeInsets.only(top: 10, bottom: 10),
-                    itemCount: comments.length,
-                    itemBuilder: (context, index) {
-                      return _buildCommentCard(comments[index]);
-                    },
-                  ),
+    appBar: AppBar(
+      title: Text('Comments - ${widget.postOwnerName}'),
+    ),
+    body: Column(
+      children: [
+        Expanded(
+          child: StreamBuilder<List<CommentModel>>(
+            stream: context.read<CommentProvider>().commentsStream(widget.postId),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text('Error loading comments: ${snapshot.error}'),
+                );
+              }
+
+              final comments = snapshot.data ?? [];
+
+              if (comments.isEmpty) {
+                return const Center(
+                  child: Text('No comments yet. Be the first to comment!'),
+                );
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.only(top: 10, bottom: 10),
+                itemCount: comments.length,
+                itemBuilder: (context, index) {
+                  return _buildCommentCard(comments[index]);
+                },
+              );
+            },
           ),
-          _isExpanded ? _buildExpandedEditor() : _buildCollapsedBar(),
-        ],
+        ),
+        _isExpanded ? _buildExpandedEditor() : _buildCollapsedBar(),
+      ],  
       ),
     );
   }
-}
+
