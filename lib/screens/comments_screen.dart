@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../models/comment_model.dart';
+import '../providers/auth_provider.dart';
+import '../providers/comment_provider.dart';
 
 class CommentModel {
   final String id;
