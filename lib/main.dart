@@ -22,6 +22,7 @@ import 'providers/post_provider.dart';
 import 'providers/event_provider.dart';
 import 'providers/theme_provider.dart';
 import 'services/club_service.dart';
+import 'providers/comment_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
