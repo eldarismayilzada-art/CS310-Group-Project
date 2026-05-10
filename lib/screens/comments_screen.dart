@@ -146,6 +146,7 @@ Future<void> _postComment() async {
                 radius: 16,
                 child: Text(
                   comment.authorName.isNotEmpty ? comment.authorName[0] : '?',
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
