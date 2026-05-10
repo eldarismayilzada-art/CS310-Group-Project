@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 class CommentModel {
   final String id;
-  final String postId;
+  final String postI;
   final String text;
   final String authorName;
   final String createdBy;
@@ -14,7 +14,7 @@ class CommentModel {
 
   CommentModel({
     required this.id,
-    required this.postId,
+    required this.postI,
     required this.text,
     required this.authorName,
     required this.createdBy,
@@ -29,7 +29,7 @@ class CommentModel {
 
     return CommentModel(
       id: doc.id,
-      postId: data['postId'] ?? '',
+      postI: data['postI'] ?? '',
       text: data['text'] ?? '',
       authorName: data['authorName'] ?? '',
       createdBy: data['createdBy'] ?? '',
@@ -43,7 +43,7 @@ class CommentModel {
   Map<String, dynamic> toFirestore() {
     return {
       'id': id,
-      'postId': postId,
+      'postI': postI,
       'text': text,
       'authorName': authorName,
       'createdBy': createdBy,
