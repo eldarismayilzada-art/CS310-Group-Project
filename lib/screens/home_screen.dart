@@ -242,13 +242,13 @@ class _PostCard extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (_) => CommentsPage(
-                        postI: post.i,
+                        postI: post.id,
                         postOwnerName: post.clubName,
               ),
             ),
           ),
-                },
-                ),
+        },
+      ),
         Divider(color: isDark ? Colors.white10 : Colors.black12),
       ],
     );
