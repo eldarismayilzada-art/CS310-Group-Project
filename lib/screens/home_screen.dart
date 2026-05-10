@@ -223,18 +223,21 @@ class _PostCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Text(post.caption, style: TextStyle(color: mainText)),
           ),
-
+        
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
             children: [
               IconButton(
-                icon: Icon(isLiked ? Icons.favorite : Icons.favorite_border,
-                  color: isLiked ? Colors.red : subText),
+                icon: Icon(
+                  isLiked ? Icons.favorite : Icons.favorite_border,
+                  color: isLiked ? Colors.red : subText,
+                ),
                 onPressed: () => postProvider.toggleLike(post.id, currentUserId),
               ),
               Text('${post.likes.length}', style: TextStyle(color: mainText)),
               const SizedBox(width: 15),
+        
               IconButton(
                 icon: Icon(Icons.chat_bubble_outline, color: subText),
                 onPressed: () {
@@ -244,11 +247,14 @@ class _PostCard extends StatelessWidget {
                       builder: (_) => CommentsPage(
                         postI: post.id,
                         postOwnerName: post.clubName,
+                      ),
+                    ),
+                  );
+                },
               ),
-            ),
+            ],
           ),
-        },
-      ),
+        ),
         Divider(color: isDark ? Colors.white10 : Colors.black12),
       ],
     );
