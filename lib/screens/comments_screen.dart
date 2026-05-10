@@ -4,27 +4,6 @@ import '../models/comment_model.dart';
 import '../providers/auth_provider.dart';
 import '../providers/comment_provider.dart';
 
-class CommentModel {
-  final String id;
-  final String postI;
-  final String text;
-  final String authorName;
-  final DateTime createdAt;
-  final double fontSize;
-  final Color textColor;
-  final String fontFamily;
-
-  CommentModel({
-    required this.id,
-    required this.postI,
-    required this.text,
-    required this.authorName,
-    required this.createdAt,
-    required this.fontSize,
-    required this.textColor,
-    required this.fontFamily,
-  });
-}
 
 class CommentsPage extends StatefulWidget {
   final String postI;
