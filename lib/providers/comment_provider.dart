@@ -11,8 +11,8 @@ class CommentProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  Stream<List<CommentModel>> commentsStream(String postId) {
-    return _commentService.getComments(postId);
+  Stream<List<CommentModel>> commentsStream(String postI) {
+    return _commentService.getComments(postI);
   }
 
   Future<bool> createComment(CommentModel comment) async {
@@ -34,7 +34,7 @@ class CommentProvider extends ChangeNotifier {
   }
 
   Future<bool> updateComment({
-    required String postId,
+    required String postI,
     required String commentId,
     required String text,
     required double fontSize,
@@ -47,7 +47,7 @@ class CommentProvider extends ChangeNotifier {
 
     try {
       await _commentService.updateComment(
-        postId: postId,
+        postI: postI,
         commentId: commentId,
         text: text,
         fontSize: fontSize,
@@ -67,7 +67,7 @@ class CommentProvider extends ChangeNotifier {
   }
 
   Future<bool> deleteComment({
-    required String postId,
+    required String postI,
     required String commentId,
   }) async {
     _isLoading = true;
@@ -76,7 +76,7 @@ class CommentProvider extends ChangeNotifier {
 
     try {
       await _commentService.deleteComment(
-        postId: postId,
+        postI: postI,
         commentId: commentId,
       );
 
