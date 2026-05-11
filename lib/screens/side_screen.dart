@@ -153,8 +153,11 @@ class SideScreen extends StatelessWidget {
               style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
             ),
             onTap: () async {
-              Navigator.pop(context);
-              await auth.signOut();
+              await context.read<AuthProvider>().signOut();
+              if(!context.mounted)
+                return;
+
+              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false,);
             },
           ),
           const SizedBox(height: 20),

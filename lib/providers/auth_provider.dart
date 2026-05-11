@@ -79,9 +79,9 @@ class AuthProvider extends ChangeNotifier {
 
   // Sign Out
   Future<void> signOut() async {
-    await _authService.signOut();
     _userModel = null;
     notifyListeners();
+    await _authService.signOut();
   }
 
   void _setLoading(bool value) {
