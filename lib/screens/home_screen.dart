@@ -194,7 +194,7 @@ class _PostCard extends StatelessWidget {
             post.imagePath!,
             height: 250,
             width: double.infinity,
-            fit: BoxFit.cover,
+            fit: BoxFit.contain,
             loadingBuilder: (context, child, progress) {
               if (progress == null) return child;
               return Container(

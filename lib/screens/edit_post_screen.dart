@@ -145,7 +145,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
                       image: imagePath != null
                           ? DecorationImage(
                               image: AssetImage(imagePath),
-                              fit: BoxFit.cover,
+                              fit: BoxFit.contain,
                             )
                           : null,
                     ),
