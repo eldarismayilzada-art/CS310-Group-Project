@@ -153,7 +153,6 @@ class _SideDrawer extends StatelessWidget {
       _DrawerItem(Icons.calendar_month_rounded, 'Calendar – Monthly', '/calendar'),
       _DrawerItem(Icons.today_rounded, 'Calendar – Daily', '/calendar'),
       _DrawerItem(Icons.article_rounded, 'Posts', '/home'),
-      _DrawerItem(Icons.add_photo_alternate_rounded, 'Create Posts', '/post/pick'),
       _DrawerItem(Icons.settings_rounded, 'Settings', '/settings'),
     ];
 
