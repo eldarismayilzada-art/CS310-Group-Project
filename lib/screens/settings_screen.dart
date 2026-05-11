@@ -24,10 +24,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String? _selectedAvatarPath;
 
   final List<String> _profileImages = [
-    'assets/images/profile1.png',
-    'assets/images/profile2.png',
-    'assets/images/profile3.png',
-    'assets/images/profile4.png',
+    'assets/images/img1.jpeg',
+    'assets/images/img2.jpeg',
+    'assets/images/img3.jpeg',
+    'assets/images/img4.jpeg',
+    'assets/images/img5.jpeg',
+    'assets/images/img6.jpeg',
+    'assets/images/img7.jpeg',
+    'assets/images/img8.jpeg',
+    'assets/images/img9.jpeg',
   ];
 
   @override
