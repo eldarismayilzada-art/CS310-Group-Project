@@ -223,7 +223,26 @@ class _PostCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Text(post.caption, style: TextStyle(color: mainText)),
           ),
-        
+
+        if (post.tagPeople != null && post.tagPeople!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Row(
+              children: [
+                Icon(Icons.person_add_alt_1_rounded,
+                    size: 14, color: Colors.grey[500]),
+                const SizedBox(width: 4),
+                Text(
+                  post.tagPeople!,
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
