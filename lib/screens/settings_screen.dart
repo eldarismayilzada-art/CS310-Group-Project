@@ -96,7 +96,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       });
     }
   }
-
+  
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -108,19 +108,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     if (uid == null) {
       setState(() => _isSaving = false);
+      messenger.showSnackBar(
+        const SnackBar(content: Text('You must be logged in to update profile.')),
+      );
       return;
     }
 
     try {
-      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+
+      final updatedData = <String, dynamic>{
         'username': _usernameController.text.trim(),
         'dateOfBirth': _dobController.text.trim(),
         'bio': _bioController.text.trim(),
-      });
+      };
+
+      
+
+      await FirebaseFirestore.instance.collection('users').doc(uid).update(updatedData);
 
       await auth.loadCurrentUser();
 
-      // ← use messenger instead of ScaffoldMessenger.of(context)
+      if (!mounted) return;
+
       messenger.showSnackBar(
         const SnackBar(content: Text('Profile updated successfully!')),
       );
@@ -129,7 +138,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         SnackBar(content: Text('Error: $e')),
       );
     } finally {
-      setState(() => _isSaving = false);
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
     }
   }
 
