@@ -102,28 +102,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     setState(() => _isSaving = true);
 
-    try {
-      final auth = context.read<AuthProvider>();
-      final uid = auth.firebaseUser?.uid;
-      if (uid == null) return;
+    final auth = context.read<AuthProvider>();
+    final uid = auth.firebaseUser?.uid;
+    final messenger = ScaffoldMessenger.of(context);
 
+    if (uid == null) {
+      setState(() => _isSaving = false);
+      return;
+    }
+
+    try {
       await FirebaseFirestore.instance.collection('users').doc(uid).update({
         'username': _usernameController.text.trim(),
         'dateOfBirth': _dobController.text.trim(),
         'bio': _bioController.text.trim(),
       });
 
-      await auth.saveOnboarding(
-        interests: auth.userModel?.interests ?? [],
-        bio: _bioController.text.trim(),
-      );
+      await auth.loadCurrentUser();
 
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      // ← use messenger instead of ScaffoldMessenger.of(context)
+      messenger.showSnackBar(
         const SnackBar(content: Text('Profile updated successfully!')),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(content: Text('Error: $e')),
       );
     } finally {
@@ -174,7 +176,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onChanged: (_) => themeProvider.toggleTheme(),
                 ),
               ),
-              
+
               const SizedBox(height: 12),
 
               Card(
@@ -185,11 +187,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   subtitle: const Text('Update what you love'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
-                    // InterestScreen Ayarlar modunda (isSettings: true) açılır
+                    // Navigate to InterestScreen without any parameters
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const InterestScreen(isSettings: true),
+                        builder: (_) => const InterestsPage(),
                       ),
                     );
                   },
@@ -234,14 +236,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 15),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
                   onPressed: _isSaving ? null : _saveProfile,
                   child: _isSaving
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2),
                         )
                       : const Text('Save Basic Info'),
                 ),
@@ -250,14 +254,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 32),
               const Divider(),
 
-              // Logout button
+              // Logout
               SizedBox(
                 width: double.infinity,
                 child: TextButton.icon(
                   icon: const Icon(Icons.logout, color: Colors.red),
-                  label: const Text('Logout', style: TextStyle(color: Colors.red)),
+                  label:
+                      const Text('Logout', style: TextStyle(color: Colors.red)),
                   onPressed: () async {
                     await auth.signOut();
+                    if (!mounted) return;
+                    Navigator.pushReplacementNamed(context, '/login');
                   },
                 ),
               ),

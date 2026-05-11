@@ -10,7 +10,8 @@ class UserModel {
   final String? grade;
   final String? dateOfBirth;
   final DateTime createdAt;
-  final String role; // "student" or "club"
+  final String role;
+  final bool onboardingComplete; // ← added
 
   UserModel({
     required this.id,
@@ -23,6 +24,7 @@ class UserModel {
     this.dateOfBirth,
     required this.createdAt,
     required this.role,
+    this.onboardingComplete = false, // ← added
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
@@ -38,6 +40,7 @@ class UserModel {
       dateOfBirth: data['dateOfBirth'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       role: data['role'] ?? 'student',
+      onboardingComplete: data['onboardingComplete'] ?? false, // ← added
     );
   }
 
@@ -53,6 +56,27 @@ class UserModel {
       'dateOfBirth': dateOfBirth,
       'createdAt': Timestamp.fromDate(createdAt),
       'role': role,
+      'onboardingComplete': onboardingComplete, // ← added
     };
+  }
+
+  // ← added
+  UserModel copyWith({
+    List<String>? interests,
+    bool? onboardingComplete,
+  }) {
+    return UserModel(
+      id: id,
+      username: username,
+      email: email,
+      bio: bio,
+      interests: interests ?? this.interests,
+      avatarUrl: avatarUrl,
+      grade: grade,
+      dateOfBirth: dateOfBirth,
+      createdAt: createdAt,
+      role: role,
+      onboardingComplete: onboardingComplete ?? this.onboardingComplete,
+    );
   }
 }

@@ -10,50 +10,36 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-
-  String _selectedRole = 'student'; 
+  final _usernameController = TextEditingController();
+  String _selectedRole = 'student';
 
   Future<void> _handleRegister() async {
-    final username = _usernameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
-    final confirm = _confirmPasswordController.text.trim();
+    final username = _usernameController.text.trim();
 
-    if (username.isEmpty || email.isEmpty ||
-        password.isEmpty || confirm.isEmpty) {
+    if (email.isEmpty || password.isEmpty || username.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all fields')),
       );
       return;
     }
 
-    if (password != confirm) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Passwords do not match')),
-      );
-      return;
-    }
-
     final auth = context.read<AuthProvider>();
-    
     final success = await auth.signUp(
       email: email,
       password: password,
       username: username,
-      role: _selectedRole, 
+      role: _selectedRole,
     );
 
     if (!mounted) return;
 
     if (success) {
-      Navigator.pushReplacementNamed(
-        context, 
-        _selectedRole == 'club' ? '/home' : '/interests'
-      );
+      // New users always go to interests page
+      Navigator.pushReplacementNamed(context, '/interests');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(auth.errorMessage ?? 'Registration failed')),
@@ -67,40 +53,69 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final auth = context.watch<AuthProvider>();
 
     return Scaffold(
-      appBar: AppBar(elevation: 0, backgroundColor: Colors.transparent),
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        leading: const BackButton(color: Colors.black),
+      ),
       body: Center(
         child: SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text("Join", style: TextStyle(
-                fontWeight: FontWeight.bold, fontSize: 30)),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text("CLUB", style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black, fontSize: 50)),
-                  const Text("HUB", style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: hubColor, fontSize: 50)),
-                ],
-              ),
-              const SizedBox(height: 20),
+              const Text("Create Account", style: TextStyle(
+                fontWeight: FontWeight.bold, fontSize: 28)),
+              const SizedBox(height: 8),
+              const Text("Join ClubHub today", style: TextStyle(
+                color: Colors.grey, fontSize: 14)),
+              const SizedBox(height: 30),
 
-              _buildRoleSelector(hubColor),
-              
-              const SizedBox(height: 20),
-              _buildField(_usernameController, 'Username / Club Name', Icons.person),
+              _buildTextField(
+                controller: _usernameController,
+                hintText: 'Username',
+                icon: Icons.person,
+              ),
               const SizedBox(height: 15),
-              _buildField(_emailController, 'Email', Icons.email),
+
+              _buildTextField(
+                controller: _emailController,
+                hintText: 'Email',
+                icon: Icons.email,
+                keyboardType: TextInputType.emailAddress,
+              ),
               const SizedBox(height: 15),
-              _buildField(_passwordController, 'Password', Icons.lock, obscure: true),
+
+              _buildTextField(
+                controller: _passwordController,
+                hintText: 'Password',
+                icon: Icons.lock,
+                obscureText: true,
+              ),
               const SizedBox(height: 15),
-              _buildField(_confirmPasswordController, 'Confirm Password', Icons.lock_outline, obscure: true),
+
+              // Role selector
+              Container(
+                width: 300,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedRole,
+                    icon: const Icon(Icons.arrow_drop_down),
+                    items: const [
+                      DropdownMenuItem(value: 'student', child: Text('Student')),
+                      DropdownMenuItem(value: 'club', child: Text('Club')),
+                    ],
+                    onChanged: (val) => setState(() => _selectedRole = val!),
+                  ),
+                ),
+              ),
+
               const SizedBox(height: 40),
 
-              // REGISTER BUTTON
               GestureDetector(
                 onTap: auth.isLoading ? null : _handleRegister,
                 child: Container(
@@ -109,22 +124,47 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(25),
                     gradient: const LinearGradient(
-                      colors: [Colors.blue, Color(0xFF6A11CB)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Colors.blue, hubColor],
                     ),
+                    boxShadow: [BoxShadow(
+                      color: Colors.blue.withOpacity(0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    )],
                   ),
                   child: Center(
                     child: auth.isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("REGISTER", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      : const Text("SIGN UP", style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16)),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+
+              const SizedBox(height: 25),
+
               GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: const Text("Already have an account? Log in", style: TextStyle(color: hubColor, fontWeight: FontWeight.w600)),
+                child: RichText(
+                  text: const TextSpan(
+                    style: TextStyle(color: Colors.black, fontSize: 14),
+                    children: [
+                      TextSpan(text: "Already have an account? "),
+                      TextSpan(
+                        text: "Log In",
+                        style: TextStyle(
+                          color: hubColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              const SizedBox(height: 30),
             ],
           ),
         ),
@@ -132,39 +172,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildRoleSelector(Color color) {
-    return Container(
-      width: 300,
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: ChoiceChip(
-              label: const Text("Student"),
-              selected: _selectedRole == 'student',
-              onSelected: (val) => setState(() => _selectedRole = 'student'),
-            ),
-          ),
-          Expanded(
-            child: ChoiceChip(
-              label: const Text("Club"),
-              selected: _selectedRole == 'club',
-              onSelected: (val) => setState(() => _selectedRole = 'club'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildField(
-    TextEditingController controller,
-    String hint,
-    IconData icon, {
-    bool obscure = false,
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hintText,
+    required IconData icon,
+    bool obscureText = false,
+    TextInputType keyboardType = TextInputType.text,
   }) {
     return Container(
       width: 300,
@@ -175,11 +188,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
       child: TextField(
         controller: controller,
-        obscureText: obscure,
-        onSubmitted: (_) => _handleRegister(),
+        obscureText: obscureText,
+        keyboardType: keyboardType,
         decoration: InputDecoration(
           border: InputBorder.none,
-          hintText: hint,
+          hintText: hintText,
           icon: Icon(icon),
         ),
       ),

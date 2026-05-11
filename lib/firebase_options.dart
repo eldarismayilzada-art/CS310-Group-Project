@@ -85,4 +85,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'clubhub-52543.firebasestorage.app',
     measurementId: 'G-WL1V82SS10',
   );
+
 }
