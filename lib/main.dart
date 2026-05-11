@@ -27,7 +27,7 @@ import 'providers/comment_provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  ClubService().seedClubs(); // fire and forget, non-blocking
+  //ClubService().seedClubs(); // fire and forget, non-blocking
   runApp(const MyApp());
 }
 
