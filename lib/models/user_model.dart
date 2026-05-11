@@ -11,8 +11,7 @@ class UserModel {
   final String? dateOfBirth;
   final DateTime createdAt;
   final String role;
-  final bool onboardingComplete; // ← added
-
+  final bool onboardingComplete;
   UserModel({
     required this.id,
     required this.username,
@@ -24,7 +23,7 @@ class UserModel {
     this.dateOfBirth,
     required this.createdAt,
     required this.role,
-    this.onboardingComplete = false, // ← added
+    this.onboardingComplete = false,
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
@@ -40,7 +39,7 @@ class UserModel {
       dateOfBirth: data['dateOfBirth'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       role: data['role'] ?? 'student',
-      onboardingComplete: data['onboardingComplete'] ?? false, // ← added
+      onboardingComplete: data['onboardingComplete'] ?? false,
     );
   }
 
@@ -56,7 +55,7 @@ class UserModel {
       'dateOfBirth': dateOfBirth,
       'createdAt': Timestamp.fromDate(createdAt),
       'role': role,
-      'onboardingComplete': onboardingComplete, // ← added
+      'onboardingComplete': onboardingComplete, 
     };
   }
 
