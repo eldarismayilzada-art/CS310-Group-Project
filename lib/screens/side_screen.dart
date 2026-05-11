@@ -50,10 +50,20 @@ class SideScreen extends StatelessWidget {
               child: Row(
                 children: [
                   CircleAvatar(
-                    radius: 25, 
+                    radius: 25,
                     backgroundColor: isDark ? Colors.grey[800] : Colors.grey[300],
-                    child: Icon(Icons.person, color: isDark ? Colors.white70 : Colors.white),
-                  ),
+                    backgroundImage: auth.userModel?.avatarUrl != null &&
+                            auth.userModel!.avatarUrl!.isNotEmpty
+                        ? AssetImage(auth.userModel!.avatarUrl!)
+                        : null,
+                    child: auth.userModel?.avatarUrl == null ||
+                            auth.userModel!.avatarUrl!.isEmpty
+                        ? Icon(
+                            Icons.person,
+                            color: isDark ? Colors.white70 : Colors.white,
+                          )
+                        : null,
+                  ),    
                   const SizedBox(width: 15),
                   Expanded(
                     child: Text(
