@@ -73,6 +73,15 @@ class ClubProfileScreen extends StatelessWidget {
             icon: const Icon(Icons.search_rounded, color: Colors.white),
             onPressed: () {},
           ),
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            onPressed: () async {
+              await context.read<AuthProvider>().signOut();
+              if (!context.mounted) return;
+              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false,);
+            },
+          ),
+
         ],
       ),
       drawer: const _SideDrawer(),

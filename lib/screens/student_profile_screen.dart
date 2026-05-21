@@ -4,6 +4,7 @@ import '../providers/auth_provider.dart';
 import '../utils/app_colors.dart';
 import '../widgets/bottom_nav_bar.dart';
 
+
 class StudentProfileScreen extends StatelessWidget {
   const StudentProfileScreen({super.key});
 
@@ -42,6 +43,8 @@ class StudentProfileScreen extends StatelessWidget {
             icon: const Icon(Icons.logout, color: Colors.white),
             onPressed: () async {
               await context.read<AuthProvider>().signOut();
+              if (!context.mounted) return;
+              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false,);
             },
           ),
         ],
@@ -215,8 +218,9 @@ class _SideDrawer extends StatelessWidget {
                   color: Colors.red,
                 )),
               onTap: () async {
-                Navigator.pop(context);
                 await context.read<AuthProvider>().signOut();
+                if (!context.mounted) return;
+                Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false,);
               },
             ),
           ],
