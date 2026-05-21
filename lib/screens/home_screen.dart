@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/post_model.dart';
+import '../models/event_model.dart'; 
 import '../providers/post_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/theme_provider.dart'; 
 import '../services/post_service.dart';
+import '../services/event_service.dart'; 
 import '../utils/app_colors.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../screens/side_screen.dart';
@@ -15,9 +18,15 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final postService = PostService();
+    final eventService = EventService();
+    final isDark = context.watch<ThemeProvider>().isDarkMode;
+
+    final scaffoldBg = isDark ? const Color(0xFF121212) : const Color(0xFFF4F3FF);
+    final dividerColor = isDark ? Colors.white12 : Colors.black12;
+    final mainTextColor = isDark ? Colors.white : Colors.black;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F3FF),
+      backgroundColor: scaffoldBg,
       drawer: const SideScreen(),
       appBar: AppBar(
         backgroundColor: AppColors.primary,
@@ -35,64 +44,116 @@ class HomeScreen extends StatelessWidget {
         ],
         elevation: 1,
       ),
-      body: StreamBuilder<List<PostModel>>(
-        stream: postService.getPosts(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-          final posts = snapshot.data ?? [];
+      body: Column(
+        children: [
+          _buildActivityStories(eventService, isDark),
+          
+          Divider(height: 1, color: dividerColor),
 
-          return Column(
-            children: [
-              _buildActivityReminders(),
-              const Divider(),
-              posts.isEmpty
-                ? const Expanded(
-                    child: Center(
-                      child: Text(
-                        'No posts yet.\nBe the first to post!',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
+          Expanded(
+            child: StreamBuilder<List<PostModel>>(
+              stream: postService.getPosts(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: mainTextColor)));
+                }
+                
+                final posts = snapshot.data ?? [];
+
+                if (posts.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No posts yet.\nFollow some clubs!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: isDark ? Colors.white54 : Colors.grey, fontSize: 16, fontFamily: 'Poppins'),
                     ),
-                  )
-                : Expanded(
-                    child: ListView.builder(
-                      itemCount: posts.length,
-                      itemBuilder: (context, index) {
-                        return _PostCard(post: posts[index]);
-                      },
-                    ),
-                  ),
-            ],
-          );
-        },
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: posts.length,
+                  itemBuilder: (context, index) => _PostCard(post: posts[index], isDark: isDark),
+                );
+              },
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: const AppBottomNavBar(currentIndex: 2),
     );
   }
 
-  Widget _buildActivityReminders() {
-    return SizedBox(
-      height: 100,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: 5,
-        itemBuilder: (context, index) {
-          return const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: CircleAvatar(
-              radius: 35,
-              child: CircleAvatar(radius: 32, backgroundColor: Colors.grey),
-            ),
+  Widget _buildActivityStories(EventService eventService, bool isDark) {
+    return Container(
+      height: 115,
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: StreamBuilder<List<EventModel>>(
+        stream: eventService.getTodaysEvents(), 
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: SizedBox(width: 20, child: CircularProgressIndicator(strokeWidth: 2)));
+          }
+
+          final events = snapshot.data ?? [];
+
+          if (events.isEmpty) {
+            return Center(
+              child: Text(
+                "No events scheduled for today", 
+                style: TextStyle(fontSize: 12, color: isDark ? Colors.white38 : Colors.grey, fontFamily: 'Poppins'),
+              ),
+            );
+          }
+
+          return ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            itemCount: events.length,
+            itemBuilder: (context, index) {
+              final event = events[index];
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.primary, width: 2),
+                      ),
+                      child: CircleAvatar(
+                        radius: 30,
+                        backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
+                        child: Text(
+                          event.clubName.isNotEmpty ? event.clubName[0].toUpperCase() : 'C', 
+                          style: TextStyle(color: isDark ? Colors.white : AppColors.primary, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    SizedBox(
+                      width: 70,
+                      child: Text(
+                        event.clubName,
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 10, 
+                          color: isDark ? Colors.white : Colors.black,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           );
         },
       ),
@@ -102,7 +163,8 @@ class HomeScreen extends StatelessWidget {
 
 class _PostCard extends StatelessWidget {
   final PostModel post;
-  const _PostCard({required this.post});
+  final bool isDark;
+  const _PostCard({required this.post, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -112,64 +174,77 @@ class _PostCard extends StatelessWidget {
     final isLiked = post.likes.contains(currentUserId);
     final isOwner = post.createdBy == currentUserId;
 
+    final mainText = isDark ? Colors.white : Colors.black;
+    final subText = isDark ? Colors.white70 : Colors.grey;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ListTile(
-          leading: const CircleAvatar(child: Icon(Icons.person)),
-          title: Text(post.clubName,
-            style: const TextStyle(fontFamily: 'Poppins',
-              fontWeight: FontWeight.bold)),
+          leading: CircleAvatar(
+            backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
+            child: Icon(Icons.person, color: isDark ? Colors.white70 : Colors.grey),
+          ),
+          title: Text(post.clubName, 
+            style: TextStyle(fontWeight: FontWeight.bold, color: mainText, fontFamily: 'Poppins')),
           subtitle: post.location != null
-            ? Text(post.location!,
-                style: const TextStyle(fontSize: 12, color: Colors.grey))
-            : null,
+              ? Text(post.location!, style: TextStyle(fontSize: 12, color: subText, fontFamily: 'Poppins'))
+              : null,
           trailing: isOwner
-            ? PopupMenuButton<String>(
-                onSelected: (value) async {
-                  if (value == 'delete') {
-                    await postProvider.deletePost(post.id);
-                  }
-                },
-                itemBuilder: (_) => [
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Row(children: [
-                      Icon(Icons.delete, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Delete'),
-                    ]),
-                  ),
-                ],
-              )
-            : null,
+              ? PopupMenuButton<String>(
+                  onSelected: (value) async {
+                    if (value == 'delete') {
+                      await postProvider.deletePost(post.id);
+                    }
+                  },
+                  itemBuilder: (_) => [
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(children: [
+                        Icon(Icons.delete, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text('Delete'),
+                      ]),
+                    ),
+                  ],
+                )
+              : null,
         ),
 
-        // Post image
-        post.imageUrl != null
-          ? Image.network(
-              post.imageUrl!,
-              height: 250,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            )
-          : Container(
-              height: 250,
-              width: double.infinity,
-              color: Colors.grey[300],
-              child: const Center(
-                child: Icon(Icons.image, size: 50, color: Colors.grey)),
-            ),
+        post.imageUrl != null && post.imageUrl!.isNotEmpty
+            ? Image.network(
+                post.imageUrl!,
+                height: 250,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, progress) {
+                  if (progress == null) return child;
+                  return Container(
+                    height: 250, 
+                    color: isDark ? Colors.white10 : Colors.grey[200],
+                    child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) => Container(
+                  height: 250, 
+                  width: double.infinity, 
+                  color: isDark ? Colors.white10 : Colors.grey[300],
+                  child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                ),
+              )
+            : Container(
+                height: 250, 
+                width: double.infinity, 
+                color: isDark ? Colors.white10 : Colors.grey[300],
+                child: const Icon(Icons.image, size: 50, color: Colors.grey),
+              ),
 
-        // Caption
         if (post.caption.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            child: Text(post.caption,
-              style: const TextStyle(fontFamily: 'Poppins', fontSize: 13)),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Text(post.caption, style: TextStyle(color: mainText, fontFamily: 'Poppins', fontSize: 13)),
           ),
 
-        // Like & Comment row
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
@@ -177,20 +252,21 @@ class _PostCard extends StatelessWidget {
               IconButton(
                 icon: Icon(
                   isLiked ? Icons.favorite : Icons.favorite_border,
-                  color: isLiked ? Colors.red : Colors.grey,
+                  color: isLiked ? Colors.red : subText,
                 ),
                 onPressed: () => postProvider.toggleLike(post.id, currentUserId),
               ),
-              Text('${post.likes.length}'),
+              Text('${post.likes.length}', style: TextStyle(color: mainText)),
               const SizedBox(width: 15),
+        
               IconButton(
-                icon: const Icon(Icons.chat_bubble_outline),
+                icon: Icon(Icons.chat_bubble_outline, color: subText),
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => CommentsPage(
-                        postI: post.id,
+                        postId: post.id,
                         postOwnerName: post.clubName,
                       ),
                     ),
@@ -200,7 +276,7 @@ class _PostCard extends StatelessWidget {
             ],
           ),
         ),
-        const Divider(),
+        Divider(color: isDark ? Colors.white10 : Colors.black12),
       ],
     );
   }
