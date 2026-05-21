@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../utils/app_colors.dart';
 import '../providers/auth_provider.dart';
-import '../providers/theme_provider.dart'; 
+import '../providers/theme_provider.dart';
 
 class SideScreen extends StatelessWidget {
   const SideScreen({super.key});
@@ -68,7 +68,7 @@ class SideScreen extends StatelessWidget {
                           user?.email ?? '',
                           style: TextStyle(
                             fontSize: 11,
-                            color: subTextColor, 
+                            color: subTextColor,
                             fontFamily: 'Poppins',
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -107,14 +107,6 @@ class SideScreen extends StatelessWidget {
                   Navigator.pushReplacementNamed(context, '/calendar');
                 },
               ),
-              ListTile(
-                contentPadding: const EdgeInsets.only(left: 40),
-                title: Text('Daily', style: TextStyle(fontFamily: 'Poppins', color: textColor)),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.pushReplacementNamed(context, '/calendar'); 
-                },
-              ),
             ],
           ),
           Divider(height: 1, color: dividerColor),
@@ -131,24 +123,24 @@ class SideScreen extends StatelessWidget {
           ),
           Divider(height: 1, color: dividerColor),
 
-          // --- CREATE POST ---
-          ListTile(
-            leading: const Icon(Icons.add_photo_alternate_rounded, color: AppColors.primary),
-            title: Text('Create Post', style: TextStyle(fontFamily: 'Poppins', color: textColor)),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushReplacementNamed(context, '/post/pick');
-            },
-          ),
-          Divider(height: 1, color: dividerColor),
+          if (user?.role == 'club') ...[
+            ListTile(
+              leading: const Icon(Icons.add_photo_alternate_rounded, color: AppColors.primary),
+              title: Text('Create Post', style: TextStyle(fontFamily: 'Poppins', color: textColor)),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushReplacementNamed(context, '/post/pick');
+              },
+            ),
+            Divider(height: 1, color: dividerColor),
+          ],
 
-          // --- SETTINGS ---
           ListTile(
             leading: const Icon(Icons.settings_outlined, color: AppColors.primary),
             title: Text('Settings', style: TextStyle(fontFamily: 'Poppins', color: textColor)),
             onTap: () {
               Navigator.pop(context);
-              Navigator.pushReplacementNamed(context, '/settings');
+              Navigator.pushNamed(context, '/settings'); 
             },
           ),
 
