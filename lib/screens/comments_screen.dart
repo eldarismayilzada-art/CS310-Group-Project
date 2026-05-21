@@ -1,34 +1,18 @@
 import 'package:flutter/material.dart';
-
-class CommentModel {
-  final String id;
-  final String postI;
-  final String text;
-  final String authorName;
-  final DateTime createdAt;
-  final double fontSize;
-  final Color textColor;
-  final String fontFamily;
-
-  CommentModel({
-    required this.id,
-    required this.postI,
-    required this.text,
-    required this.authorName,
-    required this.createdAt,
-    required this.fontSize,
-    required this.textColor,
-    required this.fontFamily,
-  });
-}
+import 'package:provider/provider.dart';
+import '../models/comment_model.dart';
+import '../providers/comment_provider.dart';
+import '../providers/auth_provider.dart';
+import '../providers/theme_provider.dart';
+import '../utils/app_colors.dart'; 
 
 class CommentsPage extends StatefulWidget {
-  final String postI;
+  final String postId; 
   final String postOwnerName;
 
   const CommentsPage({
     super.key,
-    required this.postI,
+    required this.postId,
     required this.postOwnerName,
   });
 
@@ -51,45 +35,21 @@ class _CommentsPageState extends State<CommentsPage> {
     'Times New Roman',
   ];
 
-  final List<Color> _colorOptions = [
-    Colors.black,
-    Colors.blue,
-    Colors.red,
-    Colors.green,
-    Colors.purple,
-    Colors.orange,
-  ];
+  final Map<Color, int> _colorMap = {
+    Colors.black: 0xFF000000,
+    Colors.blue: 0xFF2196F3,
+    Colors.red: 0xFFF44336,
+    Colors.green: 0xFF4CAF50,
+    Colors.purple: 0xFF9C27B0,
+    Colors.orange: 0xFFFF9800,
+  };
 
-  // Replace this with backend data later
-  final List<CommentModel> _comments = [
-    CommentModel(
-      id: '1',
-      postI: 'post_123',
-      text: 'This is an older comment.',
-      authorName: 'Ayşe',
-      createdAt: DateTime.now().subtract(const Duration(hours: 4)),
-      fontSize: 15,
-      textColor: Colors.black,
-      fontFamily: 'Roboto',
-    ),
-    CommentModel(
-      id: '2',
-      postI: 'post_123',
-      text: 'This one is newer.',
-      authorName: 'Mehmet',
-      createdAt: DateTime.now().subtract(const Duration(hours: 1)),
-      fontSize: 17,
-      textColor: Colors.blue,
-      fontFamily: 'Arial',
-    ),
-  ];
-
-  List<CommentModel> get _filteredComments {
-    final commentsForPost =
-        _comments.where((comment) => comment.postI == widget.postI).toList();
-
-    commentsForPost.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    return commentsForPost;
+  @override
+  void initState() {
+    super.initState();
+    _commentController.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -104,32 +64,41 @@ class _CommentsPageState extends State<CommentsPage> {
     });
   }
 
-  void _postComment() {
+  void _postComment() async {
     final text = _commentController.text.trim();
-
     if (text.isEmpty) return;
 
+    final auth = context.read<AuthProvider>();
+    final commentProvider = context.read<CommentProvider>();
+
     final newComment = CommentModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      postI: widget.postI,
+      id: '', 
+      postId: widget.postId,
       text: text,
-      authorName: 'Current User',
+      authorName: auth.userModel?.username ?? 'Anonymous',
+      createdBy: auth.firebaseUser?.uid ?? '',
       createdAt: DateTime.now(),
       fontSize: _selectedFontSize,
-      textColor: _selectedColor,
+      textColor: _colorMap[_selectedColor] ?? 0xFF000000, 
       fontFamily: _selectedFontFamily,
     );
 
-    setState(() {
-      _comments.insert(0, newComment);
-      _commentController.clear();
-      _isExpanded = false;
-      _selectedFontSize = 16;
-      _selectedColor = Colors.black;
-      _selectedFontFamily = 'Roboto';
-    });
+    final success = await commentProvider.createComment(newComment);
 
-    // Later: send to Firebase / backend here
+    if (success) {
+      setState(() {
+        _commentController.clear();
+        _isExpanded = false;
+        _selectedFontSize = 16;
+        _selectedColor = Colors.black;
+        _selectedFontFamily = 'Roboto';
+      });
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${commentProvider.errorMessage ?? "Failed to post comment"}')),
+      );
+    }
   }
 
   String _formatTime(DateTime time) {
@@ -142,14 +111,14 @@ class _CommentsPageState extends State<CommentsPage> {
     return '${difference.inDays} d ago';
   }
 
-  Widget _buildCommentCard(CommentModel comment) {
+  Widget _buildCommentCard(CommentModel comment, bool isDark) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E1E2E) : Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade300),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
@@ -165,22 +134,27 @@ class _CommentsPageState extends State<CommentsPage> {
             children: [
               CircleAvatar(
                 radius: 16,
-                child: Text(comment.authorName[0]),
+                backgroundColor: Colors.blueAccent.withOpacity(0.2),
+                child: Text(
+                  comment.authorName.isNotEmpty ? comment.authorName[0].toUpperCase() : 'U',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   comment.authorName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
+                    color: isDark ? Colors.white : Colors.black,
                   ),
                 ),
               ),
               Text(
                 _formatTime(comment.createdAt),
                 style: TextStyle(
-                  color: Colors.grey.shade600,
+                  color: isDark ? Colors.white60 : Colors.grey.shade600,
                   fontSize: 12,
                 ),
               ),
@@ -191,7 +165,7 @@ class _CommentsPageState extends State<CommentsPage> {
             comment.text,
             style: TextStyle(
               fontSize: comment.fontSize,
-              color: comment.textColor,
+              color: Color(comment.textColor), 
               fontFamily: comment.fontFamily,
             ),
           ),
@@ -200,15 +174,15 @@ class _CommentsPageState extends State<CommentsPage> {
     );
   }
 
-  Widget _buildCollapsedBar() {
+  Widget _buildCollapsedBar(bool isDark) {
     return SafeArea(
       top: false,
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E1E2E) : Colors.white,
           border: Border(
-            top: BorderSide(color: Colors.grey.shade300),
+            top: BorderSide(color: isDark ? Colors.white10 : Colors.grey.shade300),
           ),
         ),
         child: InkWell(
@@ -217,17 +191,17 @@ class _CommentsPageState extends State<CommentsPage> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: Colors.grey.shade100,
+              color: isDark ? Colors.white10 : Colors.grey.shade100,
               borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(color: isDark ? Colors.transparent : Colors.grey.shade300),
             ),
             child: Row(
-              children: const [
-                Icon(Icons.comment_outlined, size: 20),
-                SizedBox(width: 10),
+              children: [
+                Icon(Icons.comment_outlined, size: 20, color: isDark ? Colors.white70 : Colors.black54),
+                const SizedBox(width: 10),
                 Text(
                   'Write a comment...',
-                  style: TextStyle(color: Colors.black54),
+                  style: TextStyle(color: isDark ? Colors.white60 : Colors.black54),
                 ),
               ],
             ),
@@ -237,15 +211,15 @@ class _CommentsPageState extends State<CommentsPage> {
     );
   }
 
-  Widget _buildExpandedEditor() {
+  Widget _buildExpandedEditor(bool isDark) {
     return SafeArea(
       top: false,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E1E2E) : Colors.white,
           border: Border(
-            top: BorderSide(color: Colors.grey.shade300),
+            top: BorderSide(color: isDark ? Colors.white10 : Colors.grey.shade300),
           ),
         ),
         child: Column(
@@ -253,30 +227,32 @@ class _CommentsPageState extends State<CommentsPage> {
           children: [
             Row(
               children: [
-                const Text(
+                Text(
                   'Comment Editor',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black),
                 ),
                 const Spacer(),
                 IconButton(
                   onPressed: _toggleExpanded,
-                  icon: const Icon(Icons.close),
+                  icon: Icon(Icons.close, color: isDark ? Colors.white : Colors.black),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-
-            // Font family
+            
             DropdownButtonFormField<String>(
-              initialValue: _selectedFontFamily,
-              decoration: const InputDecoration(
+              value: _selectedFontFamily,
+              dropdownColor: isDark ? const Color(0xFF2E2E3E) : Colors.white,
+              style: TextStyle(color: isDark ? Colors.white : Colors.black), 
+              decoration: InputDecoration(
                 labelText: 'Font',
-                border: OutlineInputBorder(),
+                labelStyle: TextStyle(color: isDark ? Colors.white70 : Colors.black54), 
+                border: const OutlineInputBorder(),
               ),
               items: _fontFamilies.map((font) {
                 return DropdownMenuItem(
                   value: font,
-                  child: Text(font, style: TextStyle(fontFamily: font)),
+                  child: Text(font, style: TextStyle(fontFamily: font, color: isDark ? Colors.white : Colors.black)),
                 );
               }).toList(),
               onChanged: (value) {
@@ -287,38 +263,15 @@ class _CommentsPageState extends State<CommentsPage> {
               },
             ),
 
-            const SizedBox(height: 12),
-
-            // Font size
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Font Size: ${_selectedFontSize.toStringAsFixed(0)}'),
-                Slider(
-                  min: 12,
-                  max: 30,
-                  divisions: 18,
-                  value: _selectedFontSize,
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedFontSize = value;
-                    });
-                  },
-                ),
-              ],
-            ),
-
             const SizedBox(height: 8),
 
-            // Color picker
             Align(
               alignment: Alignment.centerLeft,
               child: Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: _colorOptions.map((color) {
+                children: _colorMap.keys.map((color) {
                   final isSelected = _selectedColor == color;
-
                   return GestureDetector(
                     onTap: () {
                       setState(() {
@@ -332,7 +285,9 @@ class _CommentsPageState extends State<CommentsPage> {
                         color: color,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isSelected ? Colors.black : Colors.transparent,
+                          color: isSelected 
+                              ? (isDark ? Colors.white : Colors.black) 
+                              : Colors.transparent,
                           width: 3,
                         ),
                       ),
@@ -350,11 +305,12 @@ class _CommentsPageState extends State<CommentsPage> {
               maxLines: 6,
               style: TextStyle(
                 fontSize: _selectedFontSize,
-                color: _selectedColor,
+                color: isDark && _selectedColor == Colors.black ? Colors.white : _selectedColor,
                 fontFamily: _selectedFontFamily,
               ),
               decoration: InputDecoration(
                 hintText: 'Write your comment...',
+                hintStyle: TextStyle(color: isDark ? Colors.white60 : Colors.grey),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -363,14 +319,13 @@ class _CommentsPageState extends State<CommentsPage> {
 
             const SizedBox(height: 12),
 
-            // Live preview
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey.shade50,
+                color: isDark ? Colors.white10 : Colors.grey.shade50,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: isDark ? Colors.white24 : Colors.grey.shade300),
               ),
               child: Text(
                 _commentController.text.isEmpty
@@ -378,7 +333,7 @@ class _CommentsPageState extends State<CommentsPage> {
                     : _commentController.text,
                 style: TextStyle(
                   fontSize: _selectedFontSize,
-                  color: _selectedColor,
+                  color: isDark && _selectedColor == Colors.black ? Colors.white : _selectedColor,
                   fontFamily: _selectedFontFamily,
                 ),
               ),
@@ -411,29 +366,54 @@ class _CommentsPageState extends State<CommentsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final comments = _filteredComments;
+    final commentProvider = context.watch<CommentProvider>();
+    final isDark = context.watch<ThemeProvider>().isDarkMode;
+    final scaffoldBg = isDark ? const Color(0xFF121212) : const Color(0xFFF4F3FF);
 
     return Scaffold(
+      backgroundColor: scaffoldBg,
       appBar: AppBar(
-        title: const Text('Comments'),
+        backgroundColor: AppColors.primary,
+        title: const Text('Comments', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Column(
         children: [
           Expanded(
-            child: comments.isEmpty
-                ? const Center(
-                    child: Text('No comments yet. Be the first to comment!'),
-                  )
-                : ListView.builder(
-                    reverse: false,
-                    padding: const EdgeInsets.only(top: 10, bottom: 10),
-                    itemCount: comments.length,
-                    itemBuilder: (context, index) {
-                      return _buildCommentCard(comments[index]);
-                    },
-                  ),
+            child: StreamBuilder<List<CommentModel>>(
+              stream: commentProvider.commentsStream(widget.postId), 
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: isDark ? Colors.white : Colors.black)));
+                }
+
+                final comments = snapshot.data ?? [];
+
+                if (comments.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No comments yet.\nBe the first to comment!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: isDark ? Colors.white54 : Colors.grey, fontSize: 16, fontFamily: 'Poppins'),
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.only(top: 10, bottom: 10),
+                  itemCount: comments.length,
+                  itemBuilder: (context, index) {
+                    return _buildCommentCard(comments[index], isDark);
+                  },
+                );
+              },
+            ),
           ),
-          _isExpanded ? _buildExpandedEditor() : _buildCollapsedBar(),
+          _isExpanded ? _buildExpandedEditor(isDark) : _buildCollapsedBar(isDark),
         ],
       ),
     );
