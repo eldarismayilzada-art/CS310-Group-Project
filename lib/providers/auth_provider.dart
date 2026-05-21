@@ -25,15 +25,29 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _status == AuthStatus.authenticated;
 
   AuthProvider() {
-  _authService.authStateChanges.listen(_onAuthStateChanged);
-  // Safety: if still unknown after 5 seconds, set unauthenticated
-  Future.delayed(const Duration(seconds: 5), () {
-    if (_status == AuthStatus.unknown) {
-      _status = AuthStatus.unauthenticated;
+    _authService.authStateChanges.listen(_onAuthStateChanged);
+    Future.delayed(const Duration(seconds: 5), () {
+      if (_status == AuthStatus.unknown) {
+        _status = AuthStatus.unauthenticated;
+        notifyListeners();
+      }
+    });
+  }
+
+  
+  Future<void> loadCurrentUser() async {
+    if (_firebaseUser != null) {
+      await _loadUserModel(_firebaseUser!.uid);
       notifyListeners();
+    } else {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        _firebaseUser = currentUser;
+        await _loadUserModel(currentUser.uid);
+        notifyListeners();
+      }
     }
-  });
-}
+  }
 
   Future<bool> resetPassword(String email) async {
     try {
@@ -117,6 +131,8 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> signOut() async {
     _userModel = null;
+    _firebaseUser = null;
+    _status = AuthStatus.unauthenticated;
     notifyListeners();
     await _authService.signOut();
   }
@@ -145,4 +161,3 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
-
