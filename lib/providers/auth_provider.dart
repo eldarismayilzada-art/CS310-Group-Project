@@ -1,101 +1,146 @@
 import 'package:flutter/material.dart';
-import '../models/user_model.dart';
-import '../services/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../services/auth_service.dart';
+import '../models/user_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/club_service.dart';
+
+enum AuthStatus { unknown, authenticated, unauthenticated }
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
+  AuthStatus _status = AuthStatus.unknown;
+  User? _firebaseUser;
   UserModel? _userModel;
-  bool _isLoading = false;
   String? _errorMessage;
+  bool _isLoading = false;
 
+  AuthStatus get status => _status;
+  User? get firebaseUser => _firebaseUser;
   UserModel? get userModel => _userModel;
-  bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  User? get firebaseUser => _authService.currentUser;
+  bool get isLoading => _isLoading;
+  bool get isAuthenticated => _status == AuthStatus.authenticated;
 
-  // Sign In — returns true on success
-  Future<bool> signIn({required String email, required String password}) async {
-    _setLoading(true);
+  AuthProvider() {
+  _authService.authStateChanges.listen(_onAuthStateChanged);
+  // Safety: if still unknown after 5 seconds, set unauthenticated
+  Future.delayed(const Duration(seconds: 5), () {
+    if (_status == AuthStatus.unknown) {
+      _status = AuthStatus.unauthenticated;
+      notifyListeners();
+    }
+  });
+}
+
+  Future<bool> resetPassword(String email) async {
     try {
-      _userModel = await _authService.signIn(email: email, password: password);
-      _errorMessage = null;
+      await _authService.resetPassword(email);
       return true;
-    }  catch (e) {
-  _errorMessage = e.toString();
-  return false;
-}finally {
-      _setLoading(false);
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
     }
   }
 
-  // Sign Up — returns true on success
+  Future<void> _onAuthStateChanged(User? user) async {
+    _firebaseUser = user;
+    if (user == null) {
+      _status = AuthStatus.unauthenticated;
+      _userModel = null;
+    } else {
+      _status = AuthStatus.authenticated;
+      await _loadUserModel(user.uid);
+      ClubService().seedClubs();
+    }
+    notifyListeners();
+  }
+
+  Future<void> _loadUserModel(String uid) async {
+    try {
+      final doc = await _db.collection('users').doc(uid).get();
+      if (doc.exists) {
+        _userModel = UserModel.fromFirestore(doc);
+      }
+    } catch (_) {}
+  }
+
   Future<bool> signUp({
     required String email,
     required String password,
     required String username,
-    required String role,
   }) async {
-    _setLoading(true);
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
     try {
-      _userModel = await _authService.signUp(
+      await _authService.signUp(
         email: email,
         password: password,
         username: username,
-        role: role,
       );
-      _errorMessage = null;
+      _isLoading = false;
+      notifyListeners();
       return true;
-    } on Exception catch (e) {
-      _errorMessage = _parseError(e);
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
       return false;
-    } finally {
-      _setLoading(false);
     }
   }
 
-  // Save interests
-  Future<void> saveInterests(List<String> interests) async {
-  if (_userModel == null) return;
-  await _authService.saveInterests(_userModel!.id, interests); // uid → id
-  _userModel = _userModel!.copyWith(
-    interests: interests,
-    onboardingComplete: true,
-  );
-  notifyListeners();
-}
-
-  // Check onboarding
-  Future<bool> hasCompletedOnboarding() async {
-    return await _authService.hasCompletedOnboarding();
-  }
-
-  // Load user on app start
-  Future<void> loadCurrentUser() async {
-    _userModel = await _authService.getCurrentUserModel();
+  Future<bool> signIn({
+    required String email,
+    required String password,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
+
+    try {
+      await _authService.signIn(email: email, password: password);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
   }
 
-  // Sign Out
   Future<void> signOut() async {
     await _authService.signOut();
-    _userModel = null;
+  }
+
+  Future<bool> hasCompletedOnboarding() async {
+    if (_firebaseUser == null) return false;
+    return _authService.hasCompletedOnboarding(_firebaseUser!.uid);
+  }
+
+  Future<void> saveOnboarding({
+    required List<String> interests,
+    required String bio,
+  }) async {
+    if (_firebaseUser == null) return;
+    await _authService.saveOnboarding(
+      uid: _firebaseUser!.uid,
+      interests: interests,
+      bio: bio,
+    );
+    await _loadUserModel(_firebaseUser!.uid);
     notifyListeners();
   }
 
-  void _setLoading(bool value) {
-    _isLoading = value;
+  void clearError() {
+    _errorMessage = null;
     notifyListeners();
-  }
-
-  String _parseError(Exception e) {
-    final msg = e.toString();
-    if (msg.contains('user-not-found')) return 'No account found with this email.';
-    if (msg.contains('wrong-password')) return 'Incorrect password.';
-    if (msg.contains('email-already-in-use')) return 'An account already exists with this email.';
-    if (msg.contains('weak-password')) return 'Password must be at least 6 characters.';
-    if (msg.contains('invalid-email')) return 'Please enter a valid email.';
-    return 'Something went wrong. Please try again.';
   }
 }
+

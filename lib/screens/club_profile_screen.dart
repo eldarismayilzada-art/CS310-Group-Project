@@ -1,24 +1,53 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../utils/app_colors.dart';
 import '../widgets/bottom_nav_bar.dart';
-import '../providers/auth_provider.dart';
-import '../screens/side_screen.dart';
 
+// ─────────────────────────────────────────────
+// MODEL
+// ─────────────────────────────────────────────
+class ClubPost {
+  final String id;
+  final String imageUrl;
+
+  const ClubPost({
+    required this.id,
+    required this.imageUrl,
+  });
+}
+
+class Club {
+  final String clubName;
+  final String? avatarUrl;
+  final List<ClubPost> posts;
+
+  const Club({
+    required this.clubName,
+    this.avatarUrl,
+    this.posts = const [],
+  });
+}
+
+// ─────────────────────────────────────────────
+// SCREEN
+// ─────────────────────────────────────────────
 class ClubProfileScreen extends StatelessWidget {
   const ClubProfileScreen({super.key});
 
+  static const _demoClub = Club(
+    clubName: 'SU Tennis Club',
+    avatarUrl: null,
+    posts: [
+      ClubPost(id: '1', imageUrl: 'https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?w=400'),
+      ClubPost(id: '2', imageUrl: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=400'),
+      ClubPost(id: '3', imageUrl: 'https://picsum.photos/seed/tennis3/400/400'),
+      ClubPost(id: '4', imageUrl: 'https://picsum.photos/seed/tennis4/400/400'),
+      ClubPost(id: '5', imageUrl: 'https://picsum.photos/seed/tennis5/400/400'),
+      ClubPost(id: '6', imageUrl: 'https://picsum.photos/seed/tennis6/400/400'),
+    ],
+  );
+
   @override
   Widget build(BuildContext context) {
-    // Get the logged-in club's info from AuthProvider (real-time stream)
-    final auth = context.watch<AuthProvider>();
-    final user = auth.userModel;
-
-    final clubName = user?.username ?? 'Club';
-    final avatarUrl = user?.avatarUrl;
-    final uid = auth.firebaseUser?.uid ?? '';
-
     return Scaffold(
       backgroundColor: const Color(0xFFF4F3FF),
       appBar: AppBar(
@@ -46,32 +75,18 @@ class ClubProfileScreen extends StatelessWidget {
           ),
         ],
       ),
-      drawer: const SideScreen(),
+      drawer: const _SideDrawer(),
       body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
             child: Center(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Avatar
-                    CircleAvatar(
-                      radius: 52,
-                      backgroundColor: AppColors.primary.withOpacity(0.15),
-                      backgroundImage: avatarUrl != null
-                          ? NetworkImage(avatarUrl)
-                          : null,
-                      child: avatarUrl == null
-                          ? const Icon(Icons.groups_rounded,
-                              size: 56, color: AppColors.primary)
-                          : null,
-                    ),
+                    _ClubAvatar(club: _demoClub),
                     const SizedBox(height: 12),
-
-                    // Club badge + name
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -95,7 +110,7 @@ class ClubProfileScreen extends StatelessWidget {
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
-                            clubName,
+                            _demoClub.clubName,
                             style: const TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: 22,
@@ -107,7 +122,6 @@ class ClubProfileScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 20),
                     const Align(
                       alignment: Alignment.centerLeft,
@@ -129,14 +143,24 @@ class ClubProfileScreen extends StatelessWidget {
             ),
           ),
 
-          // Real-time posts from Firestore for this club
-          if (uid.isNotEmpty)
-            _ClubPostsGrid(uid: uid)
-          else
-            const SliverToBoxAdapter(
-              child: Center(child: CircularProgressIndicator()),
+          // Posts grid
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            sliver: SliverGrid(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => _PostThumbnail(
+                  post: _demoClub.posts[index],
+                  onTap: () => Navigator.pushNamed(context, '/comments'),
+                ),
+                childCount: _demoClub.posts.length,
+              ),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 4,
+                mainAxisSpacing: 4,
+              ),
             ),
-
+          ),
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
         ],
       ),
@@ -145,92 +169,127 @@ class ClubProfileScreen extends StatelessWidget {
   }
 }
 
-/// Streams only this club's posts from Firestore in real time.
-class _ClubPostsGrid extends StatelessWidget {
-  final String uid;
-  const _ClubPostsGrid({required this.uid});
+// ─────────────────────────────────────────────
+// SUB-WIDGETS
+// ─────────────────────────────────────────────
+
+class _ClubAvatar extends StatelessWidget {
+  const _ClubAvatar({required this.club});
+  final Club club;
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('posts')
-          .where('createdBy', isEqualTo: uid)
-          .orderBy('createdAt', descending: true)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SliverToBoxAdapter(
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
+    return CircleAvatar(
+      radius: 52,
+      backgroundColor: AppColors.primary.withOpacity(0.15),
+      backgroundImage:
+          club.avatarUrl != null ? NetworkImage(club.avatarUrl!) : null,
+      child: club.avatarUrl == null
+          ? const Icon(Icons.groups_rounded, size: 56, color: AppColors.primary)
+          : null,
+    );
+  }
+}
 
-        final docs = snapshot.data?.docs ?? [];
+class _PostThumbnail extends StatelessWidget {
+  const _PostThumbnail({required this.post, required this.onTap});
+  final ClubPost post;
+  final VoidCallback onTap;
 
-        if (docs.isEmpty) {
-          return const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.all(32),
-              child: Center(
-                child: Text(
-                  'No posts yet.\nShare your first post!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey),
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: Image.network(
+          post.imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => Container(
+            color: AppColors.primary.withOpacity(0.1),
+            child: const Icon(Icons.image_not_supported_outlined,
+                color: AppColors.primary),
+          ),
+          loadingBuilder: (context, child, progress) {
+            if (progress == null) return child;
+            return Container(
+              color: AppColors.primary.withOpacity(0.1),
+              child: const Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.primary,
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// SIDE DRAWER
+// ─────────────────────────────────────────────
+class _SideDrawer extends StatelessWidget {
+  const _SideDrawer();
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      _DrawerItem(Icons.person_rounded, 'Profile', '/profile/student'),
+      _DrawerItem(Icons.calendar_month_rounded, 'Calendar – Monthly', '/calendar'),
+      _DrawerItem(Icons.today_rounded, 'Calendar – Daily', '/calendar'),
+      _DrawerItem(Icons.article_rounded, 'Posts', '/home'),
+      _DrawerItem(Icons.add_photo_alternate_rounded, 'Create Posts', '/post/pick'),
+      _DrawerItem(Icons.settings_rounded, 'Settings', '/settings'),
+    ];
+
+    return Drawer(
+      backgroundColor: Colors.white,
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              color: AppColors.primary,
+              child: const Text(
+                'ClubConnect',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
               ),
             ),
-          );
-        }
-
-        return SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          sliver: SliverGrid(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final data = docs[index].data() as Map<String, dynamic>;
-                final imageUrl = data['imagePath'] as String?;
-
-                return ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: imageUrl != null
-                      ? Image.network(
-                          imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            color: AppColors.primary.withOpacity(0.1),
-                            child: const Icon(Icons.image_not_supported_outlined,
-                                color: AppColors.primary),
-                          ),
-                          loadingBuilder: (context, child, progress) {
-                            if (progress == null) return child;
-                            return Container(
-                              color: AppColors.primary.withOpacity(0.1),
-                              child: const Center(
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            );
-                          },
-                        )
-                      : Container(
-                          color: AppColors.primary.withOpacity(0.1),
-                          child: const Icon(Icons.image,
-                              color: AppColors.primary),
-                        ),
-                );
-              },
-              childCount: docs.length,
-            ),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 4,
-              mainAxisSpacing: 4,
-            ),
-          ),
-        );
-      },
+            ...items.map((item) => ListTile(
+                  leading: Icon(item.icon, color: AppColors.primary),
+                  title: Text(
+                    item.label,
+                    style: const TextStyle(
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, item.route);
+                  },
+                )),
+          ],
+        ),
+      ),
     );
   }
+}
+
+class _DrawerItem {
+  final IconData icon;
+  final String label;
+  final String route;
+  const _DrawerItem(this.icon, this.label, this.route);
 }

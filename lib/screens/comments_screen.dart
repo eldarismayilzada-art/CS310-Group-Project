@@ -1,9 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../models/comment_model.dart';
-import '../providers/auth_provider.dart';
-import '../providers/comment_provider.dart';
 
+class CommentModel {
+  final String id;
+  final String postI;
+  final String text;
+  final String authorName;
+  final DateTime createdAt;
+  final double fontSize;
+  final Color textColor;
+  final String fontFamily;
+
+  CommentModel({
+    required this.id,
+    required this.postI,
+    required this.text,
+    required this.authorName,
+    required this.createdAt,
+    required this.fontSize,
+    required this.textColor,
+    required this.fontFamily,
+  });
+}
 
 class CommentsPage extends StatefulWidget {
   final String postI;
@@ -43,8 +60,37 @@ class _CommentsPageState extends State<CommentsPage> {
     Colors.orange,
   ];
 
+  // Replace this with backend data later
+  final List<CommentModel> _comments = [
+    CommentModel(
+      id: '1',
+      postI: 'post_123',
+      text: 'This is an older comment.',
+      authorName: 'Ayşe',
+      createdAt: DateTime.now().subtract(const Duration(hours: 4)),
+      fontSize: 15,
+      textColor: Colors.black,
+      fontFamily: 'Roboto',
+    ),
+    CommentModel(
+      id: '2',
+      postI: 'post_123',
+      text: 'This one is newer.',
+      authorName: 'Mehmet',
+      createdAt: DateTime.now().subtract(const Duration(hours: 1)),
+      fontSize: 17,
+      textColor: Colors.blue,
+      fontFamily: 'Arial',
+    ),
+  ];
 
+  List<CommentModel> get _filteredComments {
+    final commentsForPost =
+        _comments.where((comment) => comment.postI == widget.postI).toList();
 
+    commentsForPost.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return commentsForPost;
+  }
 
   @override
   void dispose() {
@@ -58,58 +104,33 @@ class _CommentsPageState extends State<CommentsPage> {
     });
   }
 
-Future<void> _postComment() async {
-  final text = _commentController.text.trim();
+  void _postComment() {
+    final text = _commentController.text.trim();
 
-  if (text.isEmpty) return;
+    if (text.isEmpty) return;
 
-  final auth = context.read<AuthProvider>();
-  final commentProvider = context.read<CommentProvider>();
-
-  final userId = auth.firebaseUser?.uid;
-  final username = auth.userModel?.username ?? 'Unknown User';
-
-  if (userId == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('You must be logged in to comment.')),
+    final newComment = CommentModel(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      postI: widget.postI,
+      text: text,
+      authorName: 'Current User',
+      createdAt: DateTime.now(),
+      fontSize: _selectedFontSize,
+      textColor: _selectedColor,
+      fontFamily: _selectedFontFamily,
     );
-    return;
-  }
 
-  final newComment = CommentModel(
-    id: '',
-    postI: widget.postI,
-    text: text,
-    authorName: username,
-    createdBy: userId,
-    createdAt: DateTime.now(),
-    fontSize: _selectedFontSize,
-    textColor: _selectedColor.value,
-    fontFamily: _selectedFontFamily,
-  );
-
-  final success = await commentProvider.createComment(newComment);
-
-  if (!mounted) return;
-
-  if (success) {
     setState(() {
+      _comments.insert(0, newComment);
       _commentController.clear();
       _isExpanded = false;
       _selectedFontSize = 16;
       _selectedColor = Colors.black;
       _selectedFontFamily = 'Roboto';
     });
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          commentProvider.errorMessage ?? 'Failed to post comment.',
-        ),
-      ),
-    );
+
+    // Later: send to Firebase / backend here
   }
-}
 
   String _formatTime(DateTime time) {
     final now = DateTime.now();
@@ -144,9 +165,7 @@ Future<void> _postComment() async {
             children: [
               CircleAvatar(
                 radius: 16,
-                child: Text(
-                  comment.authorName.isNotEmpty ? comment.authorName[0] : '?',
-                ),
+                child: Text(comment.authorName[0]),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -172,7 +191,7 @@ Future<void> _postComment() async {
             comment.text,
             style: TextStyle(
               fontSize: comment.fontSize,
-              color: Color(comment.textColor),
+              color: comment.textColor,
               fontFamily: comment.fontFamily,
             ),
           ),
@@ -249,7 +268,7 @@ Future<void> _postComment() async {
 
             // Font family
             DropdownButtonFormField<String>(
-              value: _selectedFontFamily,
+              initialValue: _selectedFontFamily,
               decoration: const InputDecoration(
                 labelText: 'Font',
                 border: OutlineInputBorder(),
@@ -392,48 +411,31 @@ Future<void> _postComment() async {
 
   @override
   Widget build(BuildContext context) {
+    final comments = _filteredComments;
+
     return Scaffold(
-    appBar: AppBar(
-      title: Text('Comments - ${widget.postOwnerName}'),
-    ),
-    body: Column(
-      children: [
-        Expanded(
-          child: StreamBuilder<List<CommentModel>>(
-            stream: context.read<CommentProvider>().commentsStream(widget.postI),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              if (snapshot.hasError) {
-                return Center(
-                  child: Text('Error loading comments: ${snapshot.error}'),
-                );
-              }
-
-              final comments = snapshot.data ?? [];
-
-              if (comments.isEmpty) {
-                return const Center(
-                  child: Text('No comments yet. Be the first to comment!'),
-                );
-              }
-
-              return ListView.builder(
-                padding: const EdgeInsets.only(top: 10, bottom: 10),
-                itemCount: comments.length,
-                itemBuilder: (context, index) {
-                  return _buildCommentCard(comments[index]);
-                },
-              );
-            },
+      appBar: AppBar(
+        title: const Text('Comments'),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: comments.isEmpty
+                ? const Center(
+                    child: Text('No comments yet. Be the first to comment!'),
+                  )
+                : ListView.builder(
+                    reverse: false,
+                    padding: const EdgeInsets.only(top: 10, bottom: 10),
+                    itemCount: comments.length,
+                    itemBuilder: (context, index) {
+                      return _buildCommentCard(comments[index]);
+                    },
+                  ),
           ),
-        ),
-        _isExpanded ? _buildExpandedEditor() : _buildCollapsedBar(),
-      ],  
+          _isExpanded ? _buildExpandedEditor() : _buildCollapsedBar(),
+        ],
       ),
     );
   }
 }
-

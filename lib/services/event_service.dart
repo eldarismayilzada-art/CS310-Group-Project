@@ -5,46 +5,23 @@ class EventService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final String _collection = 'events';
 
-  // --- CREATE ---
+  // CREATE
   Future<void> createEvent(EventModel event) async {
     final ref = _db.collection(_collection).doc();
-    final newEvent = EventModel(
-      id: ref.id,
-      title: event.title,
-      clubName: event.clubName,
-      date: event.date,
-      time: event.time,
-      status: event.status,
-      createdBy: event.createdBy,
-      createdAt: DateTime.now(),
-    );
-    await ref.set(newEvent.toFirestore());
+
+    await ref.set({
+      'title': event.title,
+      'clubName': event.clubName,
+      'date': Timestamp.fromDate(event.date),
+      'time': event.time,
+      'status': event.status.name,
+      'createdBy': event.createdBy,
+      'createdAt': Timestamp.fromDate(DateTime.now()),
+    });
   }
 
-  Stream<List<EventModel>> getAllEvents() {
-    return _db
-        .collection(_collection)
-        .orderBy('date', descending: false)
-        .snapshots()
-        .map((snap) =>
-            snap.docs.map((doc) => EventModel.fromFirestore(doc)).toList());
-  }
-
-  Stream<List<EventModel>> getTodaysEvents() {
-    final now = DateTime.now();
-    final startOfDay = DateTime(now.year, now.month, now.day);
-    final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
-
-    return _db
-        .collection(_collection)
-        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endOfDay))
-        .snapshots()
-        .map((snap) =>
-            snap.docs.map((doc) => EventModel.fromFirestore(doc)).toList());
-  }
-
-  Stream<List<EventModel>> getEventsByClub(String userId) {
+  // READ - real-time stream for a user
+  Stream<List<EventModel>> getEvents(String userId) {
     return _db
         .collection(_collection)
         .where('createdBy', isEqualTo: userId)
@@ -54,13 +31,15 @@ class EventService {
             snap.docs.map((doc) => EventModel.fromFirestore(doc)).toList());
   }
 
-  Future<void> updateStatus(String eventId, AttendanceStatus status) async {
+  // UPDATE - change attendance status
+  Future<void> updateStatus(
+      String eventId, AttendanceStatus status) async {
     await _db.collection(_collection).doc(eventId).update({
       'status': status.name,
     });
   }
 
-  // --- DELETE ---
+  // DELETE
   Future<void> deleteEvent(String eventId) async {
     await _db.collection(_collection).doc(eventId).delete();
   }

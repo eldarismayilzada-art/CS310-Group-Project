@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 class ClubService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -46,21 +47,23 @@ class ClubService {
   ];
 
   // Seed clubs into Firestore (call once)
-  Future<void> seedClubs() async {
-    final existing = await _db.collection('clubs').limit(1).get();
-    if (existing.docs.isNotEmpty) return; // already seeded
-
-    final batch = _db.batch();
-    for (final club in sabanciClubs) {
-      final ref = _db.collection('clubs').doc();
-      batch.set(ref, {
-        'id': ref.id,
-        'name': club['name'],
-        'category': club['category'],
-        'createdAt': DateTime.now().toIso8601String(),
-      });
+  Future<void> seedClubs({bool force = false}) async {
+    try {
+      final batch = _db.batch();
+      for (final club in sabanciClubs) {
+        final ref = _db.collection('clubs').doc();
+        batch.set(ref, {
+          'id': ref.id,
+          'name': club['name'],
+          'category': club['category'],
+          'createdAt': DateTime.now().toIso8601String(),
+        });
+      }
+      await batch.commit();
+      debugPrint('✅ Clubs seeded successfully');
+    } catch (e) {
+      debugPrint('❌ Seed error: $e');
     }
-    await batch.commit();
   }
 
   // Get all clubs as stream

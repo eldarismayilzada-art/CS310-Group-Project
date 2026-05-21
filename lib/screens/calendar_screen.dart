@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/event_model.dart';
+import '../providers/auth_provider.dart';
+import '../providers/event_provider.dart';
 import '../utils/app_colors.dart';
-import '../utils/app_text_styles.dart';
-import '../utils/app_constants.dart';
 import '../widgets/bottom_nav_bar.dart';
 import 'day_detail_screen.dart';
 
@@ -15,34 +16,22 @@ class CalendarScreen extends StatefulWidget {
 class _CalendarScreenState extends State<CalendarScreen> {
   DateTime _focusedMonth = DateTime.now();
 
-  final List<EventModel> _events = [
-    EventModel(id: '1', title: 'Chess Club Meeting', clubName: 'Chess Club',
-      date: DateTime(2026, 4, 12), time: '14:00',
-      status: AttendanceStatus.attending,
-      createdBy: 'system', createdAt: DateTime(2026, 4, 1)),
-    EventModel(id: '2', title: 'Photography Walk', clubName: 'Photo Society',
-      date: DateTime(2026, 4, 15), time: '10:00',
-      status: AttendanceStatus.maybe,
-      createdBy: 'system', createdAt: DateTime(2026, 4, 1)),
-    EventModel(id: '3', title: 'Debate Finals', clubName: 'Debate Club',
-      date: DateTime(2026, 4, 15), time: '16:00',
-      status: AttendanceStatus.attending,
-      createdBy: 'system', createdAt: DateTime(2026, 4, 1)),
-    EventModel(id: '4', title: 'Art Exhibition', clubName: 'Art Club',
-      date: DateTime(2026, 4, 22), time: '11:00',
-      status: AttendanceStatus.notAttending,
-      createdBy: 'system', createdAt: DateTime(2026, 4, 1)),
-  ];
-
   final List<String> _monthNames = [
     '', 'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
-  List<EventModel> _eventsForDay(DateTime day) => _events.where((e) =>
-    e.date.year == day.year &&
-    e.date.month == day.month &&
-    e.date.day == day.day).toList();
+  @override
+    void initState() {
+      super.initState();
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final uid = context.read<AuthProvider>().firebaseUser?.uid;
+        if (uid != null) {
+          context.read<EventProvider>().listenToEvents(uid);
+        }
+      });
+    }
 
   Color _statusColor(AttendanceStatus s) {
     switch (s) {
@@ -70,22 +59,32 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 color: Colors.white70, fontSize: 12)),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add, color: Colors.white),
+            onPressed: () => Navigator.pushNamed(context, '/add-event'),
+          ),
+        ],
       ),
       bottomNavigationBar: const AppBottomNavBar(currentIndex: 1),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildCalendarCard(),
-            const SizedBox(height: 16),
-            _buildLegend(),
-            const SizedBox(height: 16),
-          ],
-        ),
+      body: Consumer<EventProvider>(
+        builder: (context, eventProvider, _) {
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildCalendarCard(eventProvider),
+                const SizedBox(height: 16),
+                _buildLegend(),
+                const SizedBox(height: 16),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildCalendarCard() {
+  Widget _buildCalendarCard(EventProvider eventProvider) {
     return Container(
       margin: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -99,7 +98,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         children: [
           _buildMonthHeader(),
           _buildWeekdayLabels(),
-          _buildCalendarGrid(),
+          _buildCalendarGrid(eventProvider),
           const SizedBox(height: 12),
         ],
       ),
@@ -152,7 +151,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  Widget _buildCalendarGrid() {
+  Widget _buildCalendarGrid(EventProvider eventProvider) {
     final firstDay = DateTime(_focusedMonth.year, _focusedMonth.month, 1);
     final daysInMonth =
       DateTime(_focusedMonth.year, _focusedMonth.month + 1, 0).day;
@@ -178,7 +177,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
           final thisDay = DateTime(
             _focusedMonth.year, _focusedMonth.month, dayNumber);
-          final events = _eventsForDay(thisDay);
+          final events = eventProvider.eventsForDay(thisDay);
           final isToday = today.day == dayNumber &&
             today.month == _focusedMonth.month &&
             today.year == _focusedMonth.year;
@@ -212,8 +211,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   Text('$dayNumber', style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 12,
-                    fontWeight: isToday
-                      ? FontWeight.w700 : FontWeight.w400,
+                    fontWeight: isToday ? FontWeight.w700 : FontWeight.w400,
                     color: isToday
                       ? AppColors.primary
                       : const Color(0xFF1A1A2E),

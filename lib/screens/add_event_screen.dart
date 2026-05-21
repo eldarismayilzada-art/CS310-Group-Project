@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../models/event_model.dart';
+import '../providers/auth_provider.dart';
+import '../providers/event_provider.dart';
 import '../utils/app_colors.dart';
-import '../utils/app_text_styles.dart';
 import '../utils/app_constants.dart';
 
 class AddEventScreen extends StatefulWidget {
@@ -15,6 +18,14 @@ class _AddEventScreenState extends State<AddEventScreen> {
   final _clubCtrl = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
+  bool _isSaving = false;
+
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _clubCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -46,8 +57,38 @@ class _AddEventScreenState extends State<AddEventScreen> {
     if (picked != null) setState(() => _selectedTime = picked);
   }
 
-  void _submit() {
-    if (_formKey.currentState!.validate()) {
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isSaving = true);
+
+    try {
+      final uid = context.read<AuthProvider>().firebaseUser?.uid;
+      print("CURRENT USER ID: $uid");
+      if (uid == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You must be logged in to add events')),
+        );
+        return;
+      }
+
+      final timeString =
+        '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}';
+
+      final event = EventModel(
+        id: '',
+        title: _titleCtrl.text.trim(),
+        clubName: _clubCtrl.text.trim(),
+        date: _selectedDate,
+        time: timeString,
+        status: AttendanceStatus.attending,
+        createdBy: uid,
+        createdAt: DateTime.now(),
+      );
+
+      await context.read<EventProvider>().createEvent(event);
+
+      if (!mounted) return;
+
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
@@ -75,6 +116,13 @@ class _AddEventScreenState extends State<AddEventScreen> {
           ],
         ),
       );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving event: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -129,7 +177,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
               ),
               const SizedBox(height: 28),
               ElevatedButton(
-                onPressed: _submit,
+                onPressed: _isSaving ? null : _submit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -138,9 +186,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14)),
                 ),
-                child: const Text('Add to calendar',
-                  style: TextStyle(fontFamily: 'Poppins',
-                    fontSize: 15, fontWeight: FontWeight.bold)),
+                child: _isSaving
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text('Add to calendar',
+                      style: TextStyle(fontFamily: 'Poppins',
+                        fontSize: 15, fontWeight: FontWeight.bold)),
               ),
             ],
           ),

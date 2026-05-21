@@ -41,7 +41,7 @@ class StudentProfileScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
             onPressed: () async {
-              await auth.signOut();
+              await context.read<AuthProvider>().signOut();
             },
           ),
         ],
@@ -134,6 +134,20 @@ class StudentProfileScreen extends StatelessWidget {
                       ).toList(),
                     ),
                   ],
+
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.edit),
+                    label: const Text('Edit Interests & Bio'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20)),
+                    ),
+                    onPressed: () => _showEditDialog(context, auth),
+                  ),
+
                 ],
               ),
             ),
@@ -153,6 +167,7 @@ class _SideDrawer extends StatelessWidget {
       _DrawerItem(Icons.calendar_month_rounded, 'Calendar – Monthly', '/calendar'),
       _DrawerItem(Icons.today_rounded, 'Calendar – Daily', '/calendar'),
       _DrawerItem(Icons.article_rounded, 'Posts', '/home'),
+      _DrawerItem(Icons.add_photo_alternate_rounded, 'Create Posts', '/post/pick'),
       _DrawerItem(Icons.settings_rounded, 'Settings', '/settings'),
     ];
 
@@ -216,4 +231,106 @@ class _DrawerItem {
   final String label;
   final String route;
   const _DrawerItem(this.icon, this.label, this.route);
+}
+
+void _showEditDialog(BuildContext context, AuthProvider auth) {
+  final user = auth.userModel;
+  if (user == null) return;
+
+  final bioController = TextEditingController(text: user.bio);
+  final Set<String> selected = Set.from(user.interests);
+
+  const allInterests = [
+    'Physics', 'Astronomy', 'Gym', 'Aviation',
+    'Music', 'Art', 'Photography', 'Gaming',
+    'Coding', 'Sports', 'Cinema', 'Travel',
+  ];
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setState) => Padding(
+        padding: EdgeInsets.only(
+          left: 20, right: 20, top: 20,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 20),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Edit Interests & Bio',
+                style: TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8, runSpacing: 8,
+                children: allInterests.map((interest) {
+                  final isSelected = selected.contains(interest);
+                  return GestureDetector(
+                    onTap: () => setState(() {
+                      if (isSelected) {
+                        selected.remove(interest);
+                      } else {
+                        selected.add(interest);
+                      }
+                    }),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                          ? AppColors.primary
+                          : Colors.grey[200],
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(interest,
+                        style: TextStyle(
+                          color: isSelected
+                            ? Colors.white : Colors.black,
+                          fontWeight: FontWeight.w500)),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: bioController,
+                maxLines: 3,
+                maxLength: 200,
+                decoration: const InputDecoration(
+                  labelText: 'Bio',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () async {
+                    await auth.saveOnboarding(
+                      interests: selected.toList(),
+                      bio: bioController.text.trim(),
+                    );
+                    if (!ctx.mounted) return;
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Profile updated! ✅')),
+                    );
+                  },
+                  child: const Text('Save'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 }

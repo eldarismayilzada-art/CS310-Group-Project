@@ -4,11 +4,8 @@ class PostModel {
   final String id;
   final String clubName;
   final String caption;
-  final String? imagePath;
+  final String? imageUrl;
   final String? location;
-  final String? date;
-  final String? audio;
-  final String? tagPeople;
   final List<String> likes;
   final String createdBy;
   final DateTime createdAt;
@@ -17,11 +14,8 @@ class PostModel {
     required this.id,
     required this.clubName,
     required this.caption,
-    this.imagePath,
+    this.imageUrl,
     this.location,
-    this.date,
-    this.audio,
-    this.tagPeople,
     required this.likes,
     required this.createdBy,
     required this.createdAt,
@@ -33,11 +27,8 @@ class PostModel {
       id: doc.id,
       clubName: data['clubName'] ?? '',
       caption: data['caption'] ?? '',
-      imagePath: data['imagePath'],
+      imageUrl: data['imageUrl'],
       location: data['location'],
-      date: data['date'],
-      audio: data['audio'],
-      tagPeople: data['tagPeople'],
       likes: List<String>.from(data['likes'] ?? []),
       createdBy: data['createdBy'] ?? '',
       createdAt: (data['createdAt'] as Timestamp).toDate(),
@@ -49,11 +40,8 @@ class PostModel {
       'id': id,
       'clubName': clubName,
       'caption': caption,
-      'imagePath': imagePath,
+      'imageUrl': imageUrl,
       'location': location,
-      'date': date,
-      'audio': audio,
-      'tagPeople': tagPeople,
       'likes': likes,
       'createdBy': createdBy,
       'createdAt': Timestamp.fromDate(createdAt),

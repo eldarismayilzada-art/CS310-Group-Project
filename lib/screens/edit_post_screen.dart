@@ -13,21 +13,16 @@ class EditPostScreen extends StatefulWidget {
 
 class _EditPostScreenState extends State<EditPostScreen> {
   final formkey = GlobalKey<FormState>();
-  final TextEditingController audio_controller = TextEditingController();
+
   final TextEditingController location_controller = TextEditingController();
   final TextEditingController caption_controller = TextEditingController();
-  final TextEditingController date_controller = TextEditingController();
-  final TextEditingController tagPeople_controller = TextEditingController();
 
   bool _isSharing = false;
 
   @override
   void dispose() {
-    audio_controller.dispose();
     location_controller.dispose();
     caption_controller.dispose();
-    date_controller.dispose();
-    tagPeople_controller.dispose();
     super.dispose();
   }
 
@@ -45,7 +40,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
     );
   }
 
-  Future<void> submitPost(String? imagePath) async {
+  Future<void> submitPost(String? imageUrl) async {
     if (!formkey.currentState!.validate()) return;
 
     final auth = context.read<AuthProvider>();
@@ -66,21 +61,10 @@ class _EditPostScreenState extends State<EditPostScreen> {
         id: '',
         clubName: user.username,
         caption: caption_controller.text.trim(),
-        imagePath: imagePath,
+        imageUrl: imageUrl,
         location: location_controller.text.trim().isEmpty
             ? null
             : location_controller.text.trim(),
-
-        date: date_controller.text.trim().isEmpty
-            ? null
-            : date_controller.text.trim(),
-
-        audio: audio_controller.text.trim().isEmpty
-            ? null
-            : audio_controller.text.trim(),
-        tagPeople: tagPeople_controller.text.trim().isEmpty
-            ? null
-            : tagPeople_controller.text.trim(),
         likes: [],
         createdBy: user.id,
         createdAt: DateTime.now(),
@@ -107,7 +91,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final String? imagePath =
+    final String? imageUrl =
         ModalRoute.of(context)?.settings.arguments as String?;
 
     return Scaffold(
@@ -142,14 +126,14 @@ class _EditPostScreenState extends State<EditPostScreen> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(14),
                       color: Colors.grey.shade200,
-                      image: imagePath != null
+                      image: imageUrl != null
                           ? DecorationImage(
-                              image: AssetImage(imagePath),
-                              fit: BoxFit.contain,
+                              image: NetworkImage(imageUrl),
+                              fit: BoxFit.cover,
                             )
                           : null,
                     ),
-                    child: imagePath == null
+                    child: imageUrl == null
                         ? const Icon(Icons.image, size: 40)
                         : null,
                   ),
@@ -157,25 +141,8 @@ class _EditPostScreenState extends State<EditPostScreen> {
               ),
               const SizedBox(height: 20),
               TextFormField(
-                controller: audio_controller,
-                decoration: buildInputDecoration('Add audio'),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: date_controller,
-                decoration: buildInputDecoration('Add date'),
-              ),
-
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: tagPeople_controller,
-                decoration: buildInputDecoration('Tag people'),
-              ),
-
-              const SizedBox(height: 20),
-              TextFormField(
                 controller: location_controller,
-                decoration: buildInputDecoration('Add location'),
+                decoration: buildInputDecoration('Location'),
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -193,7 +160,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _isSharing ? null : () => submitPost(imagePath),
+                  onPressed: _isSharing ? null : () => submitPost(imageUrl),
                   child: _isSharing
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text('Share'),
