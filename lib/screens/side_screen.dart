@@ -2,12 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../utils/app_colors.dart';
 import '../providers/auth_provider.dart';
-import '../screens/calendar_screen.dart';
-import '../screens/day_detail_screen.dart';
-import '../screens/home_screen.dart';
-import '../screens/student_profile_screen.dart';
-import '../screens/settings_screen.dart';
-import '../screens/create_post_screen.dart';
+import '../providers/theme_provider.dart'; 
 
 class SideScreen extends StatelessWidget {
   const SideScreen({super.key});
@@ -16,9 +11,15 @@ class SideScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final user = auth.userModel;
+    final isDark = context.watch<ThemeProvider>().isDarkMode;
+
+    final drawerBg = isDark ? const Color(0xFF1A1A2E) : const Color(0xFFF4F3FF);
+    final textColor = isDark ? Colors.white : Colors.black54;
+    final subTextColor = isDark ? Colors.white60 : Colors.white70;
+    final dividerColor = isDark ? Colors.white12 : Colors.black12;
 
     return Drawer(
-      backgroundColor: const Color(0xFFF4F3FF),
+      backgroundColor: drawerBg,
       width: MediaQuery.of(context).size.width * 0.7,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -27,13 +28,11 @@ class SideScreen extends StatelessWidget {
           InkWell(
             onTap: () {
               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const StudentProfileScreen()),
-              );
+              final profileRoute = user?.role == 'club' ? '/profile/club' : '/profile/student';
+              Navigator.pushReplacementNamed(context, profileRoute);
             },
             child: DrawerHeader(
+              margin: EdgeInsets.zero,
               decoration: const BoxDecoration(
                 color: AppColors.primary,
               ),
@@ -43,12 +42,11 @@ class SideScreen extends StatelessWidget {
                     radius: 28,
                     backgroundColor: Colors.white.withOpacity(0.3),
                     backgroundImage: user?.avatarUrl != null
-                      ? NetworkImage(user!.avatarUrl!)
-                      : null,
+                        ? NetworkImage(user!.avatarUrl!)
+                        : null,
                     child: user?.avatarUrl == null
-                      ? const Icon(Icons.person,
-                          color: Colors.white, size: 30)
-                      : null,
+                        ? const Icon(Icons.person, color: Colors.white, size: 30)
+                        : null,
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -64,12 +62,13 @@ class SideScreen extends StatelessWidget {
                             color: Colors.white,
                             fontFamily: 'Poppins',
                           ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                         Text(
                           user?.email ?? '',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: Colors.white70,
+                            color: subTextColor, 
                             fontFamily: 'Poppins',
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -84,130 +83,93 @@ class SideScreen extends StatelessWidget {
 
           // --- POSTS ---
           ListTile(
-            leading: const Icon(Icons.article_rounded,
-              color: AppColors.primary),
-            title: const Text('Posts',
-              style: TextStyle(fontFamily: 'Poppins')),
+            leading: const Icon(Icons.article_rounded, color: AppColors.primary),
+            title: Text('Posts', style: TextStyle(fontFamily: 'Poppins', color: textColor)),
             onTap: () {
               Navigator.pop(context);
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const HomeScreen()),
-                (route) => false,
-              );
+              Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
             },
           ),
-          const Divider(),
+          Divider(height: 1, color: dividerColor),
 
           // --- CALENDAR ---
           ExpansionTile(
-            leading: const Icon(Icons.calendar_month,
-              color: AppColors.primary),
-            title: const Text('Calendar',
-              style: TextStyle(fontFamily: 'Poppins')),
+            iconColor: AppColors.primary,
+            collapsedIconColor: AppColors.primary,
+            leading: const Icon(Icons.calendar_month, color: AppColors.primary),
+            title: Text('Calendar', style: TextStyle(fontFamily: 'Poppins', color: textColor)),
             children: [
               ListTile(
                 contentPadding: const EdgeInsets.only(left: 40),
-                title: const Text('Monthly',
-                  style: TextStyle(fontFamily: 'Poppins')),
+                title: Text('Monthly', style: TextStyle(fontFamily: 'Poppins', color: textColor)),
                 onTap: () {
                   Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const CalendarScreen()),
-                  );
+                  Navigator.pushReplacementNamed(context, '/calendar');
                 },
               ),
               ListTile(
                 contentPadding: const EdgeInsets.only(left: 40),
-                title: const Text('Daily',
-                  style: TextStyle(fontFamily: 'Poppins')),
+                title: Text('Daily', style: TextStyle(fontFamily: 'Poppins', color: textColor)),
                 onTap: () {
                   Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => DayDetailScreen(
-                        day: DateTime.now(),
-                        events: [],
-                      ),
-                    ),
-                  );
+                  Navigator.pushReplacementNamed(context, '/calendar'); 
                 },
               ),
             ],
           ),
-          const Divider(),
+          Divider(height: 1, color: dividerColor),
 
           // --- PROFILE ---
           ListTile(
-            leading: const Icon(Icons.person_rounded,
-              color: AppColors.primary),
-            title: const Text('Profile',
-              style: TextStyle(fontFamily: 'Poppins')),
+            leading: const Icon(Icons.person_rounded, color: AppColors.primary),
+            title: Text('Profile', style: TextStyle(fontFamily: 'Poppins', color: textColor)),
             onTap: () {
               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const StudentProfileScreen()),
-              );
+              final profileRoute = user?.role == 'club' ? '/profile/club' : '/profile/student';
+              Navigator.pushReplacementNamed(context, profileRoute);
             },
           ),
-          const Divider(),
+          Divider(height: 1, color: dividerColor),
 
           // --- CREATE POST ---
           ListTile(
-            leading: const Icon(Icons.add_photo_alternate_rounded,
-              color: AppColors.primary),
-            title: const Text('Create Post',
-              style: TextStyle(fontFamily: 'Poppins')),
+            leading: const Icon(Icons.add_photo_alternate_rounded, color: AppColors.primary),
+            title: Text('Create Post', style: TextStyle(fontFamily: 'Poppins', color: textColor)),
             onTap: () {
               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const CreatePostScreen()),
-              );
+              Navigator.pushReplacementNamed(context, '/post/pick');
             },
           ),
-          const Divider(),
+          Divider(height: 1, color: dividerColor),
 
           // --- SETTINGS ---
           ListTile(
-            leading: const Icon(Icons.settings_outlined,
-              color: AppColors.primary),
-            title: const Text('Settings',
-              style: TextStyle(fontFamily: 'Poppins')),
+            leading: const Icon(Icons.settings_outlined, color: AppColors.primary),
+            title: Text('Settings', style: TextStyle(fontFamily: 'Poppins', color: textColor)),
             onTap: () {
               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => SettingsScreen()),
-              );
+              Navigator.pushReplacementNamed(context, '/settings');
             },
           ),
 
           const Spacer(),
-          const Divider(),
+          Divider(height: 1, color: dividerColor),
 
           // --- LOGOUT ---
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text('Logout',
+            title: const Text(
+              'Logout',
               style: TextStyle(
                 fontFamily: 'Poppins',
                 color: Colors.red,
                 fontWeight: FontWeight.w600,
-              )),
+              ),
+            ),
             onTap: () async {
               await context.read<AuthProvider>().signOut();
-              if(!context.mounted)
-                return;
-
-              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false,);
+              if (!context.mounted) return;
+              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
             },
           ),
           const SizedBox(height: 12),
