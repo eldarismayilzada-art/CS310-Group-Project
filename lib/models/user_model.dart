@@ -10,6 +10,8 @@ class UserModel {
   final String? grade;
   final String? dateOfBirth;
   final DateTime createdAt;
+  final String role; 
+  final bool onboardingComplete; 
 
   UserModel({
     required this.id,
@@ -21,6 +23,8 @@ class UserModel {
     this.grade,
     this.dateOfBirth,
     required this.createdAt,
+    this.role = 'student', 
+    this.onboardingComplete = false,
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
@@ -34,13 +38,14 @@ class UserModel {
       avatarUrl: data['avatarUrl'],
       grade: data['grade'],
       dateOfBirth: data['dateOfBirth'],
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      role: data['role'] ?? 'student',
+      onboardingComplete: data['onboardingComplete'] ?? false,
     );
   }
 
   Map<String, dynamic> toFirestore() {
     return {
-      'id': id,
       'username': username,
       'email': email,
       'bio': bio,
@@ -49,6 +54,8 @@ class UserModel {
       'grade': grade,
       'dateOfBirth': dateOfBirth,
       'createdAt': Timestamp.fromDate(createdAt),
+      'role': role,
+      'onboardingComplete': onboardingComplete,
     };
   }
 }
