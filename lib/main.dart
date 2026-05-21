@@ -67,10 +67,13 @@ class MyApp extends StatelessWidget {
             '/post/pick': (ctx) => const CreatePostScreen(),
             '/post/edit': (ctx) => const EditPostScreen(),
             '/settings': (ctx) => SettingsScreen(),
-            '/comments': (ctx) => const CommentsPage(
-              postI: 'post_123',
-              postOwnerName: 'Club_name',
-            ),
+            '/comments': (ctx) {
+              final String postId = ModalRoute.of(ctx)?.settings.arguments as String? ?? 'no_id';
+              return CommentsPage(
+                postId: postId,
+                postOwnerName: 'Club Post',
+              );
+            },
           },
         ),
       ),
