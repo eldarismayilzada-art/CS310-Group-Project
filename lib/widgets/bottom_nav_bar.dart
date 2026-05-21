@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart'; 
 import '../utils/app_colors.dart';
 
 class AppBottomNavBar extends StatelessWidget {
@@ -7,16 +9,23 @@ class AppBottomNavBar extends StatelessWidget {
 
   void _onTap(BuildContext context, int index) {
     if (index == currentIndex) return;
+ 
     switch (index) {
-      case 0: Navigator.pushNamed(context, '/profile/student'); break;
-      case 1: Navigator.pushNamed(context, '/calendar'); break;
-      case 2: Navigator.pushNamed(context, '/home'); break;
-      case 3: Navigator.pushNamed(context, '/post/pick'); break;
+      case 0: Navigator.pushReplacementNamed(context, '/profile/student'); break;
+      case 1: Navigator.pushReplacementNamed(context, '/calendar'); break;
+      case 2: Navigator.pushReplacementNamed(context, '/home'); break;
+      case 3: Navigator.pushReplacementNamed(context, '/post/pick'); break;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.watch<ThemeProvider>().isDarkMode;
+
+    final barBgColor = isDark ? const Color(0xFF1E1E2E) : Colors.white;
+    final unselectedColor = isDark ? Colors.white38 : const Color(0xFFAAAAAA);
+    final shadowColor = isDark ? Colors.black26 : Colors.black.withOpacity(0.08);
+
     final items = [
       _NavItem(icon: Icons.person_rounded, label: 'Profile'),
       _NavItem(icon: Icons.calendar_month_rounded, label: 'Calendar'),
@@ -26,10 +35,13 @@ class AppBottomNavBar extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: barBgColor, 
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.08),
-            blurRadius: 12, offset: const Offset(0, -3)),
+          BoxShadow(
+            color: shadowColor, 
+            blurRadius: 12, 
+            offset: const Offset(0, -3),
+          ),
         ],
       ),
       child: SafeArea(
@@ -43,33 +55,36 @@ class AppBottomNavBar extends StatelessWidget {
                 child: GestureDetector(
                   onTap: () => _onTap(context, i),
                   behavior: HitTestBehavior.opaque,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: active
+                        decoration: BoxDecoration(
+                          color: active
                               ? AppColors.primary.withOpacity(0.12)
                               : Colors.transparent,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Icon(items[i].icon,
-                            color: active ? AppColors.primary : const Color(0xFFAAAAAA),
-                            size: 24),
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                        const SizedBox(height: 2),
-                        Text(items[i].label, style: TextStyle(
-                          fontFamily: 'Poppins', fontSize: 10,
+                        child: Icon(
+                          items[i].icon,
+                          color: active ? AppColors.primary : unselectedColor, 
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        items[i].label, 
+                        style: TextStyle(
+                          fontFamily: 'Poppins', 
+                          fontSize: 10,
                           fontWeight: active ? FontWeight.w700 : FontWeight.w400,
-                          color: active ? AppColors.primary : const Color(0xFFAAAAAA),
-                        )),
-                      ],
-                    ),
+                          color: active ? AppColors.primary : unselectedColor, 
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );
