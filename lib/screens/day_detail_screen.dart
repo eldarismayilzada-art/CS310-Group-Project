@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/event_model.dart';
+import '../providers/auth_provider.dart';
+import '../providers/event_provider.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_text_styles.dart';
 import '../utils/app_constants.dart';
@@ -20,17 +23,18 @@ class DayDetailScreen extends StatefulWidget {
 }
 
 class _DayDetailScreenState extends State<DayDetailScreen> {
-  late List<EventModel> _events;
-
   final List<String> _monthNames = [
     '', 'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
   @override
-  void initState() {
-    super.initState();
-    _events = List.from(widget.events);
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final uid = context.read<AuthProvider>().firebaseUser?.uid;
+    if (uid != null) {
+      context.read<EventProvider>().listenToEvents(uid);
+    }
   }
 
   Color _statusColor(AttendanceStatus s) {
@@ -57,13 +61,12 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     }
   }
 
-  void _removeEvent(String id) {
-    setState(() => _events.removeWhere((e) => e.id == id));
-  }
-
   Future<void> _goToAddEvent() async {
     await Navigator.pushNamed(context, '/add-event');
-    // When we come back, in a real app you'd refresh events here
+  }
+
+  Future<void> _deleteEvent(String eventId) async {
+    await context.read<EventProvider>().deleteEvent(eventId);
   }
 
   @override
@@ -77,20 +80,25 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
         backgroundColor: AppColors.primary,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(dayLabel,
-              style: const TextStyle(
-                fontFamily: 'Poppins', color: Colors.white,
-                fontSize: 16, fontWeight: FontWeight.bold)),
-            Text(
-              _events.isEmpty
-                ? 'No events'
-                : '${_events.length} event${_events.length > 1 ? 's' : ''}',
-              style: const TextStyle(
-                fontFamily: 'Poppins', color: Colors.white70, fontSize: 12)),
-          ],
+        title: Consumer<EventProvider>(
+          builder: (context, eventProvider, _) {
+            final events = eventProvider.eventsForDay(widget.day);
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(dayLabel,
+                  style: const TextStyle(
+                    fontFamily: 'Poppins', color: Colors.white,
+                    fontSize: 16, fontWeight: FontWeight.bold)),
+                Text(
+                  events.isEmpty
+                    ? 'No events'
+                    : '${events.length} event${events.length > 1 ? 's' : ''}',
+                  style: const TextStyle(
+                    fontFamily: 'Poppins', color: Colors.white70, fontSize: 12)),
+              ],
+            );
+          },
         ),
         actions: [
           Padding(
@@ -107,7 +115,17 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
         ],
       ),
       bottomNavigationBar: const AppBottomNavBar(currentIndex: 1),
-      body: _events.isEmpty ? _buildEmpty() : _buildEventList(),
+      body: Consumer<EventProvider>(
+        builder: (context, eventProvider, _) {
+          final events = eventProvider.eventsForDay(widget.day);
+          if (eventProvider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          return events.isEmpty
+            ? _buildEmpty()
+            : _buildEventList(events);
+        },
+      ),
     );
   }
 
@@ -148,11 +166,11 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     );
   }
 
-  Widget _buildEventList() {
+  Widget _buildEventList(List<EventModel> events) {
     return ListView.builder(
       padding: const EdgeInsets.all(AppConstants.paddingMd),
-      itemCount: _events.length,
-      itemBuilder: (ctx, i) => _buildEventCard(_events[i]),
+      itemCount: events.length,
+      itemBuilder: (ctx, i) => _buildEventCard(events[i]),
     );
   }
 
@@ -173,7 +191,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
         child: const Icon(Icons.delete_rounded,
           color: AppColors.notAttended, size: 26),
       ),
-      onDismissed: (_) => _removeEvent(event.id),
+      onDismissed: (_) => _deleteEvent(event.id),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
@@ -188,7 +206,6 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
           padding: const EdgeInsets.all(14),
           child: Row(
             children: [
-              // Status icon circle
               Container(
                 width: 44, height: 44,
                 decoration: BoxDecoration(
@@ -199,7 +216,6 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                   color: color, size: 22),
               ),
               const SizedBox(width: 12),
-              // Event info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,19 +230,16 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                       Icon(Icons.group_rounded,
                         size: 12, color: Colors.grey[400]),
                       const SizedBox(width: 4),
-                      Text(event.clubName,
-                        style: AppTextStyles.muted),
+                      Text(event.clubName, style: AppTextStyles.muted),
                       const SizedBox(width: 10),
                       Icon(Icons.access_time_rounded,
                         size: 12, color: Colors.grey[400]),
                       const SizedBox(width: 4),
-                      Text(event.time,
-                        style: AppTextStyles.muted),
+                      Text(event.time, style: AppTextStyles.muted),
                     ]),
                   ],
                 ),
               ),
-              // Status badge
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10, vertical: 5),

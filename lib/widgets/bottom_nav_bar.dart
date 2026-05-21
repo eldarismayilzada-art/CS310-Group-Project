@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; 
 import '../utils/app_colors.dart';
-import '../providers/auth_provider.dart';
-import '../providers/theme_provider.dart'; 
 
 class AppBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -10,16 +7,8 @@ class AppBottomNavBar extends StatelessWidget {
 
   void _onTap(BuildContext context, int index) {
     if (index == currentIndex) return;
-    
     switch (index) {
-      case 0:
-        final auth = context.read<AuthProvider>();
-        if (auth.userModel?.role == 'club') {
-          Navigator.pushNamed(context, '/profile/club');
-        } else {
-          Navigator.pushNamed(context, '/profile/student');
-        }
-        break;
+      case 0: Navigator.pushNamed(context, '/profile/student'); break;
       case 1: Navigator.pushNamed(context, '/calendar'); break;
       case 2: Navigator.pushNamed(context, '/home'); break;
       case 3: Navigator.pushNamed(context, '/post/pick'); break;
@@ -28,36 +17,19 @@ class AppBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-    final themeProvider = context.watch<ThemeProvider>(); 
-    
-    final bool isClub = auth.userModel?.role == 'club';
-    final bool isDark = themeProvider.isDarkMode;
-
-    // Temaya göre renkleri belirle
-    final backgroundColor = isDark ? const Color(0xFF1E1E2E) : Colors.white;
-    final inactiveColor = isDark ? Colors.white54 : const Color(0xFFAAAAAA);
-    final shadowColor = isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.08);
-
     final items = [
       _NavItem(icon: Icons.person_rounded, label: 'Profile'),
       _NavItem(icon: Icons.calendar_month_rounded, label: 'Calendar'),
       _NavItem(icon: Icons.article_rounded, label: 'Posts'),
+      _NavItem(icon: Icons.add_circle_rounded, label: 'Create'),
     ];
-
-    if (isClub) {
-      items.add(_NavItem(icon: Icons.add_circle_rounded, label: 'Create'));
-    }
 
     return Container(
       decoration: BoxDecoration(
-        color: backgroundColor, 
+        color: Colors.white,
         boxShadow: [
-          BoxShadow(
-            color: shadowColor, 
-            blurRadius: 12, 
-            offset: const Offset(0, -3),
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.08),
+            blurRadius: 12, offset: const Offset(0, -3)),
         ],
       ),
       child: SafeArea(
@@ -79,30 +51,23 @@ class AppBottomNavBar extends StatelessWidget {
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 6),
+                            horizontal: 16, vertical: 6),
                           decoration: BoxDecoration(
                             color: active
-                                ? AppColors.primary.withOpacity(0.12)
-                                : Colors.transparent,
+                              ? AppColors.primary.withOpacity(0.12)
+                              : Colors.transparent,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Icon(items[i].icon,
-                              color: active
-                                  ? AppColors.primary
-                                  : inactiveColor, 
-                              size: 24),
+                            color: active ? AppColors.primary : const Color(0xFFAAAAAA),
+                            size: 24),
                         ),
                         const SizedBox(height: 2),
-                        Text(items[i].label,
-                            style: TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: 10,
-                              fontWeight:
-                                  active ? FontWeight.w700 : FontWeight.w400,
-                              color: active
-                                  ? AppColors.primary
-                                  : inactiveColor, 
-                            )),
+                        Text(items[i].label, style: TextStyle(
+                          fontFamily: 'Poppins', fontSize: 10,
+                          fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+                          color: active ? AppColors.primary : const Color(0xFFAAAAAA),
+                        )),
                       ],
                     ),
                   ),

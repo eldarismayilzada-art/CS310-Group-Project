@@ -5,8 +5,6 @@ import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'screens/calendar_screen.dart';
 import 'screens/add_event_screen.dart';
-import 'screens/placeholder_screen.dart';
-import 'screens/day_detail_screen.dart';
 import 'screens/student_profile_screen.dart';
 import 'screens/club_profile_screen.dart';
 import 'screens/create_post_screen.dart';
@@ -21,13 +19,10 @@ import 'screens/auth_wrapper.dart';
 import 'providers/post_provider.dart';
 import 'providers/event_provider.dart';
 import 'providers/theme_provider.dart';
-import 'services/club_service.dart';
-import 'providers/comment_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  //ClubService().seedClubs(); // fire and forget, non-blocking
   runApp(const MyApp());
 }
 
@@ -42,7 +37,6 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PostProvider()),
         ChangeNotifierProvider(create: (_) => EventProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => CommentProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) => MaterialApp(
@@ -63,7 +57,7 @@ class MyApp extends StatelessWidget {
           routes: {
             '/login': (context) => const Loginscreen(),
             '/register': (ctx) => const RegisterScreen(),
-            '/interests': (ctx) => const InterestsPage(),
+            '/interests': (ctx) => const InterestScreen(),
             '/club-login': (ctx) => const ClubProfileScreen(),
             '/home': (ctx) => const HomeScreen(),
             '/calendar': (ctx) => const CalendarScreen(),
@@ -73,10 +67,9 @@ class MyApp extends StatelessWidget {
             '/post/pick': (ctx) => const CreatePostScreen(),
             '/post/edit': (ctx) => const EditPostScreen(),
             '/settings': (ctx) => SettingsScreen(),
-            '/comments': (ctx) => const PlaceholderScreen(
-              title: 'Comments',
-              navIndex: 2,
-              icon: Icons.comment_rounded,
+            '/comments': (ctx) => const CommentsPage(
+              postI: 'post_123',
+              postOwnerName: 'Club_name',
             ),
           },
         ),
