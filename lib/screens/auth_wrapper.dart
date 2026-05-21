@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import '../providers/auth_provider.dart';
+import 'home_screen.dart'; 
+import 'login_page.dart'; 
+import 'interest_screen.dart'; 
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
@@ -18,7 +21,7 @@ class AuthWrapper extends StatelessWidget {
         }
 
         if (!snapshot.hasData) {
-          return const _NavigateTo(routeName: '/login');
+          return const Loginscreen(); 
         }
 
         return FutureBuilder(
@@ -30,68 +33,25 @@ class AuthWrapper extends StatelessWidget {
               );
             }
 
-            final auth = context.read<AuthProvider>();
+            final auth = context.watch<AuthProvider>();
             final user = auth.userModel;
 
             if (user == null) {
-              return const _NavigateTo(routeName: '/login');
+              return const Loginscreen();
             }
 
             if (user.role == 'club' || user.onboardingComplete) {
-              return const _NavigateTo(routeName: '/home');
+              return const HomeScreen();
             }
 
-            return const _NavigateTo(routeName: '/interests');
+            if (user.interests.isEmpty) {
+              return const InterestScreen();
+            }
+
+            return const HomeScreen();
           },
         );
       },
     );
-  }
-}
-
-class _NavigateTo extends StatefulWidget {
-  final String routeName;
-  const _NavigateTo({required this.routeName});
-  @override
-  State<_NavigateTo> createState() => _NavigateToState();
-
-}
-
-class _NavigateToState extends State<_NavigateTo> {
-  @override
-  void initState() {
-    super.initState();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      Navigator.pushReplacementNamed(context, widget.routeName);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final auth = context.watch<AuthProvider>();
-
-    switch (auth.status) {
-      case AuthStatus.unknown:
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        );
-      case AuthStatus.unauthenticated:
-        return const Loginscreen();
-      case AuthStatus.authenticated:
-        // Only show interests if user model is loaded AND interests are empty
-        // This means it's a brand new account, not a loading state
-        final user = auth.userModel;
-        if (user == null) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-        if (user.interests.isEmpty) {
-          return const InterestScreen();
-        }
-        return const HomeScreen();
-    }
   }
 }
