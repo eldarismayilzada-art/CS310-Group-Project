@@ -9,6 +9,7 @@ import 'providers/auth_provider.dart';
 import 'providers/post_provider.dart';
 import 'providers/event_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/comment_provider.dart'; 
 
 // Screens
 import 'screens/calendar_screen.dart';
@@ -44,6 +45,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PostProvider()),
         ChangeNotifierProvider(create: (_) => EventProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => CommentProvider()), 
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, _) {
@@ -72,7 +74,6 @@ class MyApp extends StatelessWidget {
               '/login': (context) => const Loginscreen(),
               '/register': (context) => const RegisterScreen(),
               '/interests': (context) => const InterestScreen(),
-              '/club-login': (context) => const ClubProfileScreen(),
               '/home': (context) => const HomeScreen(),
               '/calendar': (context) => const CalendarScreen(),
               '/add-event': (context) => const AddEventScreen(),
@@ -80,11 +81,16 @@ class MyApp extends StatelessWidget {
               '/profile/club': (context) => const ClubProfileScreen(),
               '/post/pick': (context) => const CreatePostScreen(),
               '/post/edit': (context) => const EditPostScreen(),
-              '/settings': (context) => SettingsScreen(),
-              '/comments': (context) => const CommentsPage(
-                postI: 'post_123',
-                postOwnerName: 'Club_name',
-              ),
+              '/settings': (context) => const SettingsScreen(), 
+              
+             
+              '/comments': (context) {
+                final postId = ModalRoute.of(context)?.settings.arguments as String? ?? '';
+                return CommentsPage(
+                  postId: postId,
+                  postOwnerName: 'Club Post',
+                );
+              },
             },
           );
         },
