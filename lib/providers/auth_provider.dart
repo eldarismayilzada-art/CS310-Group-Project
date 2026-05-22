@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../services/auth_service.dart';
 import '../models/user_model.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../services/club_service.dart';
 
 enum AuthStatus { unknown, authenticated, unauthenticated }
 
@@ -26,6 +26,8 @@ class AuthProvider extends ChangeNotifier {
 
   AuthProvider() {
     _authService.authStateChanges.listen(_onAuthStateChanged);
+
+    // Safety: if Firebase hasn't responded in 5 s, treat as unauthenticated
     Future.delayed(const Duration(seconds: 5), () {
       if (_status == AuthStatus.unknown) {
         _status = AuthStatus.unauthenticated;
@@ -34,53 +36,51 @@ class AuthProvider extends ChangeNotifier {
     });
   }
 
-  Future<void> loadCurrentUser() async {
-    if (_firebaseUser != null) {
-      await _loadUserModel(_firebaseUser!.uid);
-      notifyListeners();
-    } else {
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser != null) {
-        _firebaseUser = currentUser;
-        await _loadUserModel(currentUser.uid);
-        notifyListeners();
-      }
-    }
-  }
-
-  Future<bool> resetPassword(String email) async {
-    try {
-      await _authService.resetPassword(email);
-      return true;
-    } catch (e) {
-      _errorMessage = e.toString();
-      notifyListeners();
-      return false;
-    }
-  }
-
+  // ─────────────────────────────
+  // AUTH STATE
+  // ─────────────────────────────
   Future<void> _onAuthStateChanged(User? user) async {
     _firebaseUser = user;
+
     if (user == null) {
       _status = AuthStatus.unauthenticated;
       _userModel = null;
+      notifyListeners();
     } else {
+      _isLoading = true;
       _status = AuthStatus.authenticated;
-      await _loadUserModel(user.uid);
-      ClubService().seedClubs();
+      notifyListeners();
+
+      await loadCurrentUser();
+
+      _isLoading = false;
+      notifyListeners();
     }
-    notifyListeners();
   }
 
-  Future<void> _loadUserModel(String uid) async {
+  // ─────────────────────────────
+  // LOAD USER FROM FIRESTORE
+  // ─────────────────────────────
+  Future<void> loadCurrentUser() async {
+    if (_firebaseUser == null) return;
+
     try {
-      final doc = await _db.collection('users').doc(uid).get();
+      final doc =
+          await _db.collection('users').doc(_firebaseUser!.uid).get();
+
       if (doc.exists) {
         _userModel = UserModel.fromFirestore(doc);
       }
-    } catch (_) {}
+    } catch (e) {
+      _errorMessage = e.toString();
+    }
+
+    notifyListeners();
   }
 
+  // ─────────────────────────────
+  // SIGN UP
+  // ─────────────────────────────
   Future<bool> signUp({
     required String email,
     required String password,
@@ -127,6 +127,9 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  // ─────────────────────────────
+  // SIGN IN
+  // ─────────────────────────────
   Future<bool> signIn({
     required String email,
     required String password,
@@ -148,14 +151,34 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  // ─────────────────────────────
+  // RESET PASSWORD
+  // ─────────────────────────────
+  Future<bool> resetPassword(String email) async {
+    try {
+      await _authService.resetPassword(email);
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // ─────────────────────────────
+  // SIGN OUT
+  // ─────────────────────────────
   Future<void> signOut() async {
-    _userModel = null;
     _firebaseUser = null;
+    _userModel = null;
     _status = AuthStatus.unauthenticated;
     notifyListeners();
     await _authService.signOut();
   }
 
+  // ─────────────────────────────
+  // ONBOARDING
+  // ─────────────────────────────
   Future<bool> hasCompletedOnboarding() async {
     if (_firebaseUser == null) return false;
     if (_userModel != null) return _userModel!.onboardingComplete;
@@ -167,13 +190,14 @@ class AuthProvider extends ChangeNotifier {
     required String bio,
   }) async {
     if (_firebaseUser == null) return;
+
     await _authService.saveOnboarding(
       uid: _firebaseUser!.uid,
       interests: interests,
       bio: bio,
     );
-    await _loadUserModel(_firebaseUser!.uid);
-    notifyListeners();
+
+    await loadCurrentUser();
   }
 
   void clearError() {

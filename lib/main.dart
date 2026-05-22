@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+
 import 'firebase_options.dart';
+
+// Providers
 import 'providers/auth_provider.dart';
+import 'providers/post_provider.dart';
+import 'providers/event_provider.dart';
+import 'providers/theme_provider.dart';
+
+// Screens
 import 'screens/calendar_screen.dart';
 import 'screens/add_event_screen.dart';
 import 'screens/student_profile_screen.dart';
@@ -16,13 +24,12 @@ import 'screens/interest_screen.dart';
 import 'screens/login_page.dart';
 import 'screens/register_page.dart';
 import 'screens/auth_wrapper.dart';
-import 'providers/post_provider.dart';
-import 'providers/event_provider.dart';
-import 'providers/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
@@ -39,43 +46,48 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, _) => MaterialApp(
-          title: 'ClubHub',
-          debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            fontFamily: 'Poppins',
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF6A11CB)),
-          ),
-          darkTheme: ThemeData.dark().copyWith(
-            textTheme: ThemeData.dark()
-              .textTheme
-              .apply(fontFamily: 'Poppins'),
-          ),
-          themeMode: themeProvider.themeMode,
-          home: const AuthWrapper(),
-          routes: {
-            '/login': (context) => const Loginscreen(),
-            '/register': (ctx) => const RegisterScreen(),
-            '/interests': (ctx) => const InterestScreen(),
-            '/club-login': (ctx) => const ClubProfileScreen(),
-            '/home': (ctx) => const HomeScreen(),
-            '/calendar': (ctx) => const CalendarScreen(),
-            '/add-event': (ctx) => const AddEventScreen(),
-            '/profile/student': (ctx) => const StudentProfileScreen(),
-            '/profile/club': (ctx) => const ClubProfileScreen(),
-            '/post/pick': (ctx) => const CreatePostScreen(),
-            '/post/edit': (ctx) => const EditPostScreen(),
-            '/settings': (ctx) => SettingsScreen(),
-            '/comments': (ctx) {
-              final String postId = ModalRoute.of(ctx)?.settings.arguments as String? ?? 'no_id';
-              return CommentsPage(
-                postId: postId,
-                postOwnerName: 'Club Post',
-              );
+        builder: (context, themeProvider, _) {
+          return MaterialApp(
+            title: 'ClubHub',
+            debugShowCheckedModeBanner: false,
+
+            theme: ThemeData(
+              fontFamily: 'Poppins',
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: const Color(0xFF6A11CB),
+              ),
+            ),
+
+            darkTheme: ThemeData.dark().copyWith(
+              textTheme: ThemeData.dark()
+                  .textTheme
+                  .apply(fontFamily: 'Poppins'),
+            ),
+
+            themeMode: themeProvider.themeMode,
+
+            home: const AuthWrapper(),
+
+            routes: {
+              '/login': (context) => const Loginscreen(),
+              '/register': (context) => const RegisterScreen(),
+              '/interests': (context) => const InterestScreen(),
+              '/club-login': (context) => const ClubProfileScreen(),
+              '/home': (context) => const HomeScreen(),
+              '/calendar': (context) => const CalendarScreen(),
+              '/add-event': (context) => const AddEventScreen(),
+              '/profile/student': (context) => const StudentProfileScreen(),
+              '/profile/club': (context) => const ClubProfileScreen(),
+              '/post/pick': (context) => const CreatePostScreen(),
+              '/post/edit': (context) => const EditPostScreen(),
+              '/settings': (context) => SettingsScreen(),
+              '/comments': (context) => const CommentsPage(
+                postI: 'post_123',
+                postOwnerName: 'Club_name',
+              ),
             },
-          },
-        ),
+          );
+        },
       ),
     );
   }

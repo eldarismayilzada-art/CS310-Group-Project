@@ -39,7 +39,12 @@ class HomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.search, color: Colors.white),
-            onPressed: () {},
+            onPressed: () {
+              showSearch(
+                context: context,
+                delegate: _PostSearchDelegate(postService),
+              );
+            },
           ),
         ],
         elevation: 1,
@@ -110,50 +115,53 @@ class HomeScreen extends StatelessWidget {
             );
           }
 
-          return ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            itemCount: events.length,
-            itemBuilder: (context, index) {
-              final event = events[index];
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.primary, width: 2),
-                      ),
-                      child: CircleAvatar(
-                        radius: 30,
-                        backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
+          return Column(
+            children: [
+              _buildActivityReminders(),
+              const Divider(),
+              posts.isEmpty
+                  ? const Expanded(
+                      child: Center(
                         child: Text(
-                          event.clubName.isNotEmpty ? event.clubName[0].toUpperCase() : 'C', 
-                          style: TextStyle(color: isDark ? Colors.white : AppColors.primary, fontWeight: FontWeight.bold),
+                          'No posts yet.\nBe the first to post!',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                            fontFamily: 'Poppins',
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 5),
-                    SizedBox(
-                      width: 70,
-                      child: Text(
-                        event.clubName,
-                        textAlign: TextAlign.center,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 10, 
-                          color: isDark ? Colors.white : Colors.black,
-                          fontWeight: FontWeight.w500,
-                          fontFamily: 'Poppins',
-                        ),
+                    )
+                  : Expanded(
+                      child: ListView.builder(
+                        itemCount: posts.length,
+                        itemBuilder: (context, index) {
+                          return _PostCard(post: posts[index]);
+                        },
                       ),
                     ),
-                  ],
-                ),
-              );
-            },
+            ],
+          );
+        },
+      ),
+      bottomNavigationBar: const AppBottomNavBar(currentIndex: 2),
+    );
+  }
+
+  Widget _buildActivityReminders() {
+    return SizedBox(
+      height: 100,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: 5,
+        itemBuilder: (context, index) {
+          return const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: CircleAvatar(
+              radius: 35,
+              child: CircleAvatar(radius: 32, backgroundColor: Colors.grey),
+            ),
           );
         },
       ),
@@ -161,6 +169,114 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// Search delegate — searches posts by club name or caption
+// ─────────────────────────────────────────────────────────────
+class _PostSearchDelegate extends SearchDelegate<String> {
+  final PostService postService;
+
+  _PostSearchDelegate(this.postService);
+
+  @override
+  String get searchFieldLabel => 'Search posts...';
+
+  @override
+  ThemeData appBarTheme(BuildContext context) {
+    return Theme.of(context).copyWith(
+      appBarTheme: const AppBarTheme(
+        backgroundColor: AppColors.primary,
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
+      inputDecorationTheme: const InputDecorationTheme(
+        hintStyle: TextStyle(color: Colors.white70, fontFamily: 'Poppins'),
+        border: InputBorder.none,
+      ),
+      textTheme: const TextTheme(
+        titleLarge: TextStyle(
+            color: Colors.white, fontFamily: 'Poppins', fontSize: 16),
+      ),
+    );
+  }
+
+  @override
+  List<Widget> buildActions(BuildContext context) => [
+        if (query.isNotEmpty)
+          IconButton(
+            icon: const Icon(Icons.clear, color: Colors.white),
+            onPressed: () => query = '',
+          ),
+      ];
+
+  @override
+  Widget buildLeading(BuildContext context) => IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        onPressed: () => close(context, ''),
+      );
+
+  @override
+  Widget buildResults(BuildContext context) => _buildSearchResults(context);
+
+  @override
+  Widget buildSuggestions(BuildContext context) => _buildSearchResults(context);
+
+  Widget _buildSearchResults(BuildContext context) {
+    if (query.trim().isEmpty) {
+      return const Center(
+        child: Text('Type to search posts or clubs',
+            style: TextStyle(fontFamily: 'Poppins', color: Colors.grey)),
+      );
+    }
+
+    return StreamBuilder<List<PostModel>>(
+      stream: postService.getPosts(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final q = query.toLowerCase();
+        final results = snapshot.data!.where((p) {
+          return p.clubName.toLowerCase().contains(q) ||
+              p.caption.toLowerCase().contains(q);
+        }).toList();
+
+        if (results.isEmpty) {
+          return Center(
+            child: Text('No results for "$query"',
+                style:
+                    const TextStyle(fontFamily: 'Poppins', color: Colors.grey)),
+          );
+        }
+
+        return ListView.builder(
+          itemCount: results.length,
+          itemBuilder: (context, index) {
+            final post = results[index];
+            return ListTile(
+              leading: const CircleAvatar(child: Icon(Icons.group)),
+              title: Text(post.clubName,
+                  style: const TextStyle(
+                      fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
+              subtitle: Text(
+                post.caption,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontFamily: 'Poppins', fontSize: 12),
+              ),
+              onTap: () {
+                close(context, post.id);
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Post card (unchanged)
+// ─────────────────────────────────────────────────────────────
 class _PostCard extends StatelessWidget {
   final PostModel post;
   final bool isDark;
@@ -181,14 +297,13 @@ class _PostCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ListTile(
-          leading: CircleAvatar(
-            backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
-            child: Icon(Icons.person, color: isDark ? Colors.white70 : Colors.grey),
-          ),
-          title: Text(post.clubName, 
-            style: TextStyle(fontWeight: FontWeight.bold, color: mainText, fontFamily: 'Poppins')),
+          leading: const CircleAvatar(child: Icon(Icons.person)),
+          title: Text(post.clubName,
+              style: const TextStyle(
+                  fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
           subtitle: post.location != null
-              ? Text(post.location!, style: TextStyle(fontSize: 12, color: subText, fontFamily: 'Poppins'))
+              ? Text(post.location!,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey))
               : null,
           trailing: isOwner
               ? PopupMenuButton<String>(
@@ -211,38 +326,28 @@ class _PostCard extends StatelessWidget {
               : null,
         ),
 
-        post.imageUrl != null && post.imageUrl!.isNotEmpty
+        // Post image
+        post.imageUrl != null
             ? Image.network(
                 post.imageUrl!,
                 height: 250,
                 width: double.infinity,
                 fit: BoxFit.cover,
-                loadingBuilder: (context, child, progress) {
-                  if (progress == null) return child;
-                  return Container(
-                    height: 250, 
-                    color: isDark ? Colors.white10 : Colors.grey[200],
-                    child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                  );
-                },
-                errorBuilder: (context, error, stackTrace) => Container(
-                  height: 250, 
-                  width: double.infinity, 
-                  color: isDark ? Colors.white10 : Colors.grey[300],
-                  child: const Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                ),
               )
             : Container(
-                height: 250, 
-                width: double.infinity, 
-                color: isDark ? Colors.white10 : Colors.grey[300],
-                child: const Icon(Icons.image, size: 50, color: Colors.grey),
+                height: 250,
+                width: double.infinity,
+                color: Colors.grey[300],
+                child: const Center(
+                    child: Icon(Icons.image, size: 50, color: Colors.grey)),
               ),
 
         if (post.caption.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Text(post.caption, style: TextStyle(color: mainText, fontFamily: 'Poppins', fontSize: 13)),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Text(post.caption,
+                style:
+                    const TextStyle(fontFamily: 'Poppins', fontSize: 13)),
           ),
 
         Padding(
@@ -254,7 +359,8 @@ class _PostCard extends StatelessWidget {
                   isLiked ? Icons.favorite : Icons.favorite_border,
                   color: isLiked ? Colors.red : subText,
                 ),
-                onPressed: () => postProvider.toggleLike(post.id, currentUserId),
+                onPressed: () =>
+                    postProvider.toggleLike(post.id, currentUserId),
               ),
               Text('${post.likes.length}', style: TextStyle(color: mainText)),
               const SizedBox(width: 15),

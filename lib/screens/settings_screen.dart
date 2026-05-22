@@ -367,24 +367,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onPressed: () async {
                     final navigator = Navigator.of(context);
                     await auth.signOut();
-                    Future.microtask(() {
-                      navigator.pushNamedAndRemoveUntil('/login', (route) => false);
-                    });
-                  },
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // --- ADMIN SEED BUTTON ---
-              SizedBox(
-                width: double.infinity,
-                child: TextButton.icon(
-                  icon: const Icon(Icons.sync, size: 16, color: Colors.grey),
-                  label: const Text('Seed Clubs Database (Admin)', style: TextStyle(color: Colors.grey, fontSize: 11)),
-                  onPressed: () async {
-                    await ClubService().seedClubs(force: true);
-                    if (!mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Clubs seeded! ✅')));
+                    if (!mounted) {
+                      return;
+                    }
+                    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false,);
                   },
                 ),
               ),

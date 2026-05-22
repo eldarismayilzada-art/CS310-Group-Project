@@ -183,9 +183,11 @@ class SideScreen extends StatelessWidget {
             onTap: () async {
               final navigator = Navigator.of(context);
               await context.read<AuthProvider>().signOut();
-              Future.microtask(() {
-                navigator.pushNamedAndRemoveUntil('/login', (route) => false);
-              });
+              if(!context.mounted) {
+                return;
+              }
+
+              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false,);
             },
           ),
           const SizedBox(height: 12),
