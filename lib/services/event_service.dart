@@ -33,6 +33,29 @@ class EventService {
         });
   }
 
+  // ADDED: Fetch events scheduled for today
+  Stream<List<EventModel>> getTodaysEvents() {
+    final now = DateTime.now();
+    // Start of today: 00:00:00
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    // End of today: 23:59:59
+    final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
+
+    return _db
+        .collection(_collection)
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endOfDay))
+        .snapshots()
+        .map((snap) {
+          final list = snap.docs
+              .map((doc) => EventModel.fromFirestore(doc))
+              .toList();
+          // Sort them by time/date just like your other method
+          list.sort((a, b) => a.date.compareTo(b.date));
+          return list;
+        });
+  }
+
   // UPDATE attendance status
   Future<void> updateStatus(String eventId, AttendanceStatus status) async {
     await _db.collection(_collection).doc(eventId).update({

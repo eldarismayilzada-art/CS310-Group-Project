@@ -93,6 +93,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  // Fixed: Removed the accidental copy-pasted `posts` list builder
   Widget _buildActivityStories(EventService eventService, bool isDark) {
     return Container(
       height: 115,
@@ -115,46 +116,20 @@ class HomeScreen extends StatelessWidget {
             );
           }
 
-          return Column(
-            children: [
-              _buildActivityReminders(),
-              const Divider(),
-              posts.isEmpty
-                  ? const Expanded(
-                      child: Center(
-                        child: Text(
-                          'No posts yet.\nBe the first to post!',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey,
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
-                      ),
-                    )
-                  : Expanded(
-                      child: ListView.builder(
-                        itemCount: posts.length,
-                        itemBuilder: (context, index) {
-                          return _PostCard(post: posts[index]);
-                        },
-                      ),
-                    ),
-            ],
-          );
+          // Pass the actual fetched events to the reminders widget
+          return _buildActivityReminders(events);
         },
       ),
-      bottomNavigationBar: const AppBottomNavBar(currentIndex: 2),
     );
   }
 
-  Widget _buildActivityReminders() {
+  // Updated to dynamically use the passed Event list size
+  Widget _buildActivityReminders(List<EventModel> events) {
     return SizedBox(
       height: 100,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: 5,
+        itemCount: events.length,
         itemBuilder: (context, index) {
           return const Padding(
             padding: EdgeInsets.all(8.0),
@@ -170,7 +145,7 @@ class HomeScreen extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Search delegate — searches posts by club name or caption
+// Search delegate
 // ─────────────────────────────────────────────────────────────
 class _PostSearchDelegate extends SearchDelegate<String> {
   final PostService postService;
@@ -275,7 +250,7 @@ class _PostSearchDelegate extends SearchDelegate<String> {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Post card (unchanged)
+// Post card
 // ─────────────────────────────────────────────────────────────
 class _PostCard extends StatelessWidget {
   final PostModel post;
