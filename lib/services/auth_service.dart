@@ -6,17 +6,17 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // Stream of auth state changes
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
   // Current user
   User? get currentUser => _auth.currentUser;
 
-  // Sign Up
+  // --- SIGN UP ---
   Future<UserModel> signUp({
     required String email,
     required String password,
     required String username,
+    required String role, 
   }) async {
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
@@ -25,12 +25,13 @@ class AuthService {
       );
 
       final user = UserModel(
-        id: credential.user!.uid,
+        id: credential.user!.uid, 
         username: username,
         email: email,
         bio: '',
         interests: [],
-        createdAt: DateTime.now(),
+        role: role, 
+        onboardingComplete: role == 'club', 
       );
 
       await _db
@@ -44,7 +45,7 @@ class AuthService {
     }
   }
 
-  // Sign In
+  // --- SIGN IN ---
   Future<void> signIn({
     required String email,
     required String password,
@@ -59,20 +60,20 @@ class AuthService {
     }
   }
 
-  // Sign Out
+  // --- SIGN OUT ---
   Future<void> signOut() async {
     await _auth.signOut();
   }
 
-  // Check if user has completed onboarding (has interests saved)
+  // --- CHECK ONBOARDING STATUS ---
   Future<bool> hasCompletedOnboarding(String uid) async {
     final doc = await _db.collection('users').doc(uid).get();
     if (!doc.exists) return false;
-    final interests = List<String>.from(doc.data()?['interests'] ?? []);
-    return interests.isNotEmpty;
+    
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+    return data['onboardingComplete'] ?? false;
   }
 
-  // Save interests & bio after onboarding
   Future<void> saveOnboarding({
     required String uid,
     required List<String> interests,
@@ -81,18 +82,19 @@ class AuthService {
     await _db.collection('users').doc(uid).update({
       'interests': interests,
       'bio': bio,
+      'onboardingComplete': true,
     });
   }
 
+  // --- RESET PASSWORD ---
   Future<void> resetPassword(String email) async {
-  try {
-    await _auth.sendPasswordResetEmail(email: email);
-  } on FirebaseAuthException catch (e) {
-    throw _handleAuthError(e);
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthError(e);
+    }
   }
-}
 
-  // Human-readable error messages
   String _handleAuthError(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':

@@ -5,7 +5,6 @@ class EventService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final String _collection = 'events';
 
-  // CREATE
   Future<void> createEvent(EventModel event) async {
     final ref = _db.collection(_collection).doc();
     await ref.set({
@@ -41,8 +40,12 @@ class EventService {
     });
   }
 
-  // DELETE
   Future<void> deleteEvent(String eventId) async {
-    await _db.collection(_collection).doc(eventId).delete();
+    try {
+      await _db.collection(_collection).doc(eventId).delete();
+    } catch (e) {
+      print("Error: $e");
+      rethrow;
+    }
   }
 }

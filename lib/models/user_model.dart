@@ -1,54 +1,50 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserModel {
-  final String id;
-  final String username;
+  final String id; 
   final String email;
-  final String bio;
+  final String username;
+  final String role; 
   final List<String> interests;
+  final String bio;
   final String? avatarUrl;
-  final String? grade;
-  final String? dateOfBirth;
-  final DateTime createdAt;
+  final bool onboardingComplete;
 
   UserModel({
     required this.id,
-    required this.username,
     required this.email,
-    required this.bio,
+    required this.username,
+    required this.role,
     required this.interests,
+    required this.bio,
     this.avatarUrl,
-    this.grade,
-    this.dateOfBirth,
-    required this.createdAt,
+    required this.onboardingComplete,
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = doc.data() as Map<String, dynamic>? ?? {};
     return UserModel(
-      id: doc.id,
-      username: data['username'] ?? '',
+      id: doc.id, 
       email: data['email'] ?? '',
-      bio: data['bio'] ?? '',
+      username: data['username'] ?? '',
+      role: data['role'] ?? 'student',
       interests: List<String>.from(data['interests'] ?? []),
+      bio: data['bio'] ?? '',
       avatarUrl: data['avatarUrl'],
-      grade: data['grade'],
-      dateOfBirth: data['dateOfBirth'],
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      onboardingComplete: data['onboardingComplete'] ?? data['isFirstLogin'] ?? false,
     );
   }
 
   Map<String, dynamic> toFirestore() {
     return {
       'id': id,
-      'username': username,
       'email': email,
-      'bio': bio,
+      'username': username,
+      'role': role,
       'interests': interests,
+      'bio': bio,
       'avatarUrl': avatarUrl,
-      'grade': grade,
-      'dateOfBirth': dateOfBirth,
-      'createdAt': Timestamp.fromDate(createdAt),
+      'onboardingComplete': onboardingComplete,
     };
   }
 }

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/post_model.dart';
+import '../models/event_model.dart'; 
 import '../providers/post_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/theme_provider.dart'; 
 import '../services/post_service.dart';
+import '../services/event_service.dart'; 
 import '../utils/app_colors.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../screens/side_screen.dart';
@@ -15,9 +18,15 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final postService = PostService();
+    final eventService = EventService();
+    final isDark = context.watch<ThemeProvider>().isDarkMode;
+
+    final scaffoldBg = isDark ? const Color(0xFF121212) : const Color(0xFFF4F3FF);
+    final dividerColor = isDark ? Colors.white12 : Colors.black12;
+    final mainTextColor = isDark ? Colors.white : Colors.black;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F3FF),
+      backgroundColor: scaffoldBg,
       drawer: const SideScreen(),
       appBar: AppBar(
         backgroundColor: AppColors.primary,
@@ -40,16 +49,71 @@ class HomeScreen extends StatelessWidget {
         ],
         elevation: 1,
       ),
-      body: StreamBuilder<List<PostModel>>(
-        stream: postService.getPosts(),
+      body: Column(
+        children: [
+          _buildActivityStories(eventService, isDark),
+          
+          Divider(height: 1, color: dividerColor),
+
+          Expanded(
+            child: StreamBuilder<List<PostModel>>(
+              stream: postService.getPosts(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: mainTextColor)));
+                }
+                
+                final posts = snapshot.data ?? [];
+
+                if (posts.isEmpty) {
+                  return Center(
+                    child: Text(
+                      'No posts yet.\nFollow some clubs!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: isDark ? Colors.white54 : Colors.grey, fontSize: 16, fontFamily: 'Poppins'),
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: posts.length,
+                  itemBuilder: (context, index) => _PostCard(post: posts[index], isDark: isDark),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: const AppBottomNavBar(currentIndex: 2),
+    );
+  }
+
+  Widget _buildActivityStories(EventService eventService, bool isDark) {
+    return Container(
+      height: 115,
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: StreamBuilder<List<EventModel>>(
+        stream: eventService.getTodaysEvents(), 
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: SizedBox(width: 20, child: CircularProgressIndicator(strokeWidth: 2)));
           }
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+
+          final events = snapshot.data ?? [];
+
+          if (events.isEmpty) {
+            return Center(
+              child: Text(
+                "No events scheduled for today", 
+                style: TextStyle(fontSize: 12, color: isDark ? Colors.white38 : Colors.grey, fontFamily: 'Poppins'),
+              ),
+            );
           }
-          final posts = snapshot.data ?? [];
 
           return Column(
             children: [
@@ -215,7 +279,8 @@ class _PostSearchDelegate extends SearchDelegate<String> {
 // ─────────────────────────────────────────────────────────────
 class _PostCard extends StatelessWidget {
   final PostModel post;
-  const _PostCard({required this.post});
+  final bool isDark;
+  const _PostCard({required this.post, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -224,6 +289,9 @@ class _PostCard extends StatelessWidget {
     final currentUserId = auth.firebaseUser?.uid ?? '';
     final isLiked = post.likes.contains(currentUserId);
     final isOwner = post.createdBy == currentUserId;
+
+    final mainText = isDark ? Colors.white : Colors.black;
+    final subText = isDark ? Colors.white70 : Colors.grey;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -274,7 +342,6 @@ class _PostCard extends StatelessWidget {
                     child: Icon(Icons.image, size: 50, color: Colors.grey)),
               ),
 
-        // Caption
         if (post.caption.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -283,7 +350,6 @@ class _PostCard extends StatelessWidget {
                     const TextStyle(fontFamily: 'Poppins', fontSize: 13)),
           ),
 
-        // Like & Comment row
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
@@ -291,21 +357,22 @@ class _PostCard extends StatelessWidget {
               IconButton(
                 icon: Icon(
                   isLiked ? Icons.favorite : Icons.favorite_border,
-                  color: isLiked ? Colors.red : Colors.grey,
+                  color: isLiked ? Colors.red : subText,
                 ),
                 onPressed: () =>
                     postProvider.toggleLike(post.id, currentUserId),
               ),
-              Text('${post.likes.length}'),
+              Text('${post.likes.length}', style: TextStyle(color: mainText)),
               const SizedBox(width: 15),
+        
               IconButton(
-                icon: const Icon(Icons.chat_bubble_outline),
+                icon: Icon(Icons.chat_bubble_outline, color: subText),
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => CommentsPage(
-                        postI: post.id,
+                        postId: post.id,
                         postOwnerName: post.clubName,
                       ),
                     ),
@@ -315,7 +382,7 @@ class _PostCard extends StatelessWidget {
             ],
           ),
         ),
-        const Divider(),
+        Divider(color: isDark ? Colors.white10 : Colors.black12),
       ],
     );
   }
