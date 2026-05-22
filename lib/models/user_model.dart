@@ -1,60 +1,49 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserModel {
-  final String id;
-  final String username;
+  final String id; 
   final String email;
-  final String bio;
-  final List<String> interests;
-  final String? avatarUrl;
-  final String? grade;
-  final String? dateOfBirth;
-  final DateTime createdAt;
+  final String username;
   final String role; 
-  final bool onboardingComplete; 
+  final List<String> interests;
+  final String bio;
+  final String? avatarUrl;
+  final bool onboardingComplete;
 
   UserModel({
     required this.id,
-    required this.username,
     required this.email,
-    required this.bio,
+    required this.username,
+    required this.role,
     required this.interests,
+    required this.bio,
     this.avatarUrl,
-    this.grade,
-    this.dateOfBirth,
-    required this.createdAt,
-    this.role = 'student', 
-    this.onboardingComplete = false,
+    required this.onboardingComplete,
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = doc.data() as Map<String, dynamic>? ?? {};
     return UserModel(
-      id: doc.id,
-      username: data['username'] ?? '',
+      id: doc.id, 
       email: data['email'] ?? '',
-      bio: data['bio'] ?? '',
-      interests: List<String>.from(data['interests'] ?? []),
-      avatarUrl: data['avatarUrl'],
-      grade: data['grade'],
-      dateOfBirth: data['dateOfBirth'],
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      username: data['username'] ?? '',
       role: data['role'] ?? 'student',
-      onboardingComplete: data['onboardingComplete'] ?? false,
+      interests: List<String>.from(data['interests'] ?? []),
+      bio: data['bio'] ?? '',
+      avatarUrl: data['avatarUrl'],
+      onboardingComplete: data['onboardingComplete'] ?? data['isFirstLogin'] ?? false,
     );
   }
 
   Map<String, dynamic> toFirestore() {
     return {
-      'username': username,
+      'id': id,
       'email': email,
-      'bio': bio,
-      'interests': interests,
-      'avatarUrl': avatarUrl,
-      'grade': grade,
-      'dateOfBirth': dateOfBirth,
-      'createdAt': Timestamp.fromDate(createdAt),
+      'username': username,
       'role': role,
+      'interests': interests,
+      'bio': bio,
+      'avatarUrl': avatarUrl,
       'onboardingComplete': onboardingComplete,
     };
   }
