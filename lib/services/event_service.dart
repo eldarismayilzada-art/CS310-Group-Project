@@ -8,7 +8,6 @@ class EventService {
   // CREATE
   Future<void> createEvent(EventModel event) async {
     final ref = _db.collection(_collection).doc();
-
     await ref.set({
       'title': event.title,
       'clubName': event.clubName,
@@ -20,20 +19,23 @@ class EventService {
     });
   }
 
-  // READ - real-time stream for a user
+  // READ — no orderBy so no composite index needed; we sort in Dart
   Stream<List<EventModel>> getEvents(String userId) {
     return _db
         .collection(_collection)
         .where('createdBy', isEqualTo: userId)
-        .orderBy('date')
         .snapshots()
-        .map((snap) =>
-            snap.docs.map((doc) => EventModel.fromFirestore(doc)).toList());
+        .map((snap) {
+          final list = snap.docs
+              .map((doc) => EventModel.fromFirestore(doc))
+              .toList();
+          list.sort((a, b) => a.date.compareTo(b.date));
+          return list;
+        });
   }
 
-  // UPDATE - change attendance status
-  Future<void> updateStatus(
-      String eventId, AttendanceStatus status) async {
+  // UPDATE attendance status
+  Future<void> updateStatus(String eventId, AttendanceStatus status) async {
     await _db.collection(_collection).doc(eventId).update({
       'status': status.name,
     });

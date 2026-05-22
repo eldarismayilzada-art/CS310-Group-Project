@@ -31,11 +31,12 @@ class _AddEventScreenState extends State<AddEventScreen> {
     final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
-      firstDate: DateTime(2026),
-      lastDate: DateTime(2027),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(primary: AppColors.primary),
+          colorScheme:
+              const ColorScheme.light(primary: AppColors.primary),
         ),
         child: child!,
       ),
@@ -49,7 +50,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
       initialTime: _selectedTime,
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(primary: AppColors.primary),
+          colorScheme:
+              const ColorScheme.light(primary: AppColors.primary),
         ),
         child: child!,
       ),
@@ -62,17 +64,18 @@ class _AddEventScreenState extends State<AddEventScreen> {
     setState(() => _isSaving = true);
 
     try {
-      final uid = context.read<AuthProvider>().firebaseUser?.uid;
-      print("CURRENT USER ID: $uid");
+      final uid =
+          context.read<AuthProvider>().firebaseUser?.uid;
       if (uid == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('You must be logged in to add events')),
+          const SnackBar(
+              content: Text('You must be logged in to add events')),
         );
         return;
       }
 
       final timeString =
-        '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}';
+          '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}';
 
       final event = EventModel(
         id: '',
@@ -89,33 +92,37 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
       if (!mounted) return;
 
-      showDialog(
+      // Show success dialog then pop ONCE back to calendar
+      await showDialog(
         context: context,
         builder: (_) => AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16)),
+              borderRadius: BorderRadius.circular(16)),
           title: const Row(children: [
             Icon(Icons.check_circle_rounded, color: Color(0xFF4CAF50)),
             SizedBox(width: 8),
             Text('Event added!',
-              style: TextStyle(fontFamily: 'Poppins', fontSize: 17)),
+                style: TextStyle(fontFamily: 'Poppins', fontSize: 17)),
           ]),
           content: Text(
             '"${_titleCtrl.text}" has been added to your calendar.',
-            style: const TextStyle(fontFamily: 'Poppins', fontSize: 13)),
+            style:
+                const TextStyle(fontFamily: 'Poppins', fontSize: 13)),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.pop(context);
-              },
+              onPressed: () => Navigator.pop(context), // closes dialog only
               child: const Text('Done',
-                style: TextStyle(fontFamily: 'Poppins',
-                  color: AppColors.primary, fontWeight: FontWeight.bold)),
+                  style: TextStyle(
+                      fontFamily: 'Poppins',
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold)),
             ),
           ],
         ),
       );
+
+      // Now pop the AddEventScreen itself — returns to CalendarScreen
+      if (mounted) Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -135,11 +142,15 @@ class _AddEventScreenState extends State<AddEventScreen> {
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         title: const Text('Add Event',
-          style: TextStyle(fontFamily: 'Poppins',
-            color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            style: TextStyle(
+                fontFamily: 'Poppins',
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold)),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppConstants.paddingMd),
+        padding:
+            const EdgeInsets.all(AppConstants.paddingMd),
         child: Form(
           key: _formKey,
           child: Column(
@@ -151,7 +162,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 label: 'Event title',
                 icon: Icons.event_rounded,
                 validator: (val) => (val == null || val.isEmpty)
-                  ? 'Please enter a title' : null,
+                    ? 'Please enter a title'
+                    : null,
               ),
               const SizedBox(height: 12),
               _buildField(
@@ -159,13 +171,15 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 label: 'Club name',
                 icon: Icons.group_rounded,
                 validator: (val) => (val == null || val.isEmpty)
-                  ? 'Please enter a club name' : null,
+                    ? 'Please enter a club name'
+                    : null,
               ),
               const SizedBox(height: 12),
               _buildTappableField(
                 label: 'Date',
                 icon: Icons.calendar_today_rounded,
-                value: '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                value:
+                    '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
                 onTap: _pickDate,
               ),
               const SizedBox(height: 12),
@@ -184,13 +198,16 @@ class _AddEventScreenState extends State<AddEventScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+                      borderRadius: BorderRadius.circular(14)),
                 ),
                 child: _isSaving
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text('Add to calendar',
-                      style: TextStyle(fontFamily: 'Poppins',
-                        fontSize: 15, fontWeight: FontWeight.bold)),
+                    ? const CircularProgressIndicator(
+                        color: Colors.white)
+                    : const Text('Add to calendar',
+                        style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -210,25 +227,29 @@ class _AddEventScreenState extends State<AddEventScreen> {
       style: const TextStyle(fontFamily: 'Poppins', fontSize: 14),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(fontFamily: 'Poppins', fontSize: 13),
+        labelStyle:
+            const TextStyle(fontFamily: 'Poppins', fontSize: 13),
         prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(
+                color: AppColors.primary, width: 1.5)),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE53935))),
+            borderRadius: BorderRadius.circular(12),
+            borderSide:
+                const BorderSide(color: Color(0xFFE53935))),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFE53935), width: 1.5)),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(
+                color: Color(0xFFE53935), width: 1.5)),
       ),
       validator: validator,
     );
@@ -243,7 +264,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -255,17 +277,21 @@ class _AddEventScreenState extends State<AddEventScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(
-                  fontFamily: 'Poppins', fontSize: 11,
-                  color: Color(0xFF6B6B6B))),
-                Text(value, style: const TextStyle(
-                  fontFamily: 'Poppins', fontSize: 14,
-                  color: Color(0xFF1A1A2E))),
+                Text(label,
+                    style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 11,
+                        color: Color(0xFF6B6B6B))),
+                Text(value,
+                    style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 14,
+                        color: Color(0xFF1A1A2E))),
               ],
             ),
             const Spacer(),
             const Icon(Icons.chevron_right_rounded,
-              color: Color(0xFFAAAAAA), size: 20),
+                color: Color(0xFFAAAAAA), size: 20),
           ],
         ),
       ),

@@ -30,7 +30,12 @@ class HomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.search, color: Colors.white),
-            onPressed: () {},
+            onPressed: () {
+              showSearch(
+                context: context,
+                delegate: _PostSearchDelegate(postService),
+              );
+            },
           ),
         ],
         elevation: 1,
@@ -51,27 +56,27 @@ class HomeScreen extends StatelessWidget {
               _buildActivityReminders(),
               const Divider(),
               posts.isEmpty
-                ? const Expanded(
-                    child: Center(
-                      child: Text(
-                        'No posts yet.\nBe the first to post!',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
-                          fontFamily: 'Poppins',
+                  ? const Expanded(
+                      child: Center(
+                        child: Text(
+                          'No posts yet.\nBe the first to post!',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                            fontFamily: 'Poppins',
+                          ),
                         ),
                       ),
+                    )
+                  : Expanded(
+                      child: ListView.builder(
+                        itemCount: posts.length,
+                        itemBuilder: (context, index) {
+                          return _PostCard(post: posts[index]);
+                        },
+                      ),
                     ),
-                  )
-                : Expanded(
-                    child: ListView.builder(
-                      itemCount: posts.length,
-                      itemBuilder: (context, index) {
-                        return _PostCard(post: posts[index]);
-                      },
-                    ),
-                  ),
             ],
           );
         },
@@ -100,6 +105,114 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// Search delegate — searches posts by club name or caption
+// ─────────────────────────────────────────────────────────────
+class _PostSearchDelegate extends SearchDelegate<String> {
+  final PostService postService;
+
+  _PostSearchDelegate(this.postService);
+
+  @override
+  String get searchFieldLabel => 'Search posts...';
+
+  @override
+  ThemeData appBarTheme(BuildContext context) {
+    return Theme.of(context).copyWith(
+      appBarTheme: const AppBarTheme(
+        backgroundColor: AppColors.primary,
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
+      inputDecorationTheme: const InputDecorationTheme(
+        hintStyle: TextStyle(color: Colors.white70, fontFamily: 'Poppins'),
+        border: InputBorder.none,
+      ),
+      textTheme: const TextTheme(
+        titleLarge: TextStyle(
+            color: Colors.white, fontFamily: 'Poppins', fontSize: 16),
+      ),
+    );
+  }
+
+  @override
+  List<Widget> buildActions(BuildContext context) => [
+        if (query.isNotEmpty)
+          IconButton(
+            icon: const Icon(Icons.clear, color: Colors.white),
+            onPressed: () => query = '',
+          ),
+      ];
+
+  @override
+  Widget buildLeading(BuildContext context) => IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        onPressed: () => close(context, ''),
+      );
+
+  @override
+  Widget buildResults(BuildContext context) => _buildSearchResults(context);
+
+  @override
+  Widget buildSuggestions(BuildContext context) => _buildSearchResults(context);
+
+  Widget _buildSearchResults(BuildContext context) {
+    if (query.trim().isEmpty) {
+      return const Center(
+        child: Text('Type to search posts or clubs',
+            style: TextStyle(fontFamily: 'Poppins', color: Colors.grey)),
+      );
+    }
+
+    return StreamBuilder<List<PostModel>>(
+      stream: postService.getPosts(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final q = query.toLowerCase();
+        final results = snapshot.data!.where((p) {
+          return p.clubName.toLowerCase().contains(q) ||
+              p.caption.toLowerCase().contains(q);
+        }).toList();
+
+        if (results.isEmpty) {
+          return Center(
+            child: Text('No results for "$query"',
+                style:
+                    const TextStyle(fontFamily: 'Poppins', color: Colors.grey)),
+          );
+        }
+
+        return ListView.builder(
+          itemCount: results.length,
+          itemBuilder: (context, index) {
+            final post = results[index];
+            return ListTile(
+              leading: const CircleAvatar(child: Icon(Icons.group)),
+              title: Text(post.clubName,
+                  style: const TextStyle(
+                      fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
+              subtitle: Text(
+                post.caption,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontFamily: 'Poppins', fontSize: 12),
+              ),
+              onTap: () {
+                close(context, post.id);
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Post card (unchanged)
+// ─────────────────────────────────────────────────────────────
 class _PostCard extends StatelessWidget {
   final PostModel post;
   const _PostCard({required this.post});
@@ -118,55 +231,56 @@ class _PostCard extends StatelessWidget {
         ListTile(
           leading: const CircleAvatar(child: Icon(Icons.person)),
           title: Text(post.clubName,
-            style: const TextStyle(fontFamily: 'Poppins',
-              fontWeight: FontWeight.bold)),
+              style: const TextStyle(
+                  fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
           subtitle: post.location != null
-            ? Text(post.location!,
-                style: const TextStyle(fontSize: 12, color: Colors.grey))
-            : null,
+              ? Text(post.location!,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey))
+              : null,
           trailing: isOwner
-            ? PopupMenuButton<String>(
-                onSelected: (value) async {
-                  if (value == 'delete') {
-                    await postProvider.deletePost(post.id);
-                  }
-                },
-                itemBuilder: (_) => [
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Row(children: [
-                      Icon(Icons.delete, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Delete'),
-                    ]),
-                  ),
-                ],
-              )
-            : null,
+              ? PopupMenuButton<String>(
+                  onSelected: (value) async {
+                    if (value == 'delete') {
+                      await postProvider.deletePost(post.id);
+                    }
+                  },
+                  itemBuilder: (_) => [
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(children: [
+                        Icon(Icons.delete, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text('Delete'),
+                      ]),
+                    ),
+                  ],
+                )
+              : null,
         ),
 
         // Post image
         post.imageUrl != null
-          ? Image.network(
-              post.imageUrl!,
-              height: 250,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            )
-          : Container(
-              height: 250,
-              width: double.infinity,
-              color: Colors.grey[300],
-              child: const Center(
-                child: Icon(Icons.image, size: 50, color: Colors.grey)),
-            ),
+            ? Image.network(
+                post.imageUrl!,
+                height: 250,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              )
+            : Container(
+                height: 250,
+                width: double.infinity,
+                color: Colors.grey[300],
+                child: const Center(
+                    child: Icon(Icons.image, size: 50, color: Colors.grey)),
+              ),
 
         // Caption
         if (post.caption.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: Text(post.caption,
-              style: const TextStyle(fontFamily: 'Poppins', fontSize: 13)),
+                style:
+                    const TextStyle(fontFamily: 'Poppins', fontSize: 13)),
           ),
 
         // Like & Comment row
@@ -179,7 +293,8 @@ class _PostCard extends StatelessWidget {
                   isLiked ? Icons.favorite : Icons.favorite_border,
                   color: isLiked ? Colors.red : Colors.grey,
                 ),
-                onPressed: () => postProvider.toggleLike(post.id, currentUserId),
+                onPressed: () =>
+                    postProvider.toggleLike(post.id, currentUserId),
               ),
               Text('${post.likes.length}'),
               const SizedBox(width: 15),

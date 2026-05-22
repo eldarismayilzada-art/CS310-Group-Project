@@ -257,8 +257,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(color: Colors.red)),
                   onPressed: () async {
                     await auth.signOut();
-                    if (!mounted)
+                    if (!mounted) {
                       return;
+                    }
                     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false,);
                   },
                 ),

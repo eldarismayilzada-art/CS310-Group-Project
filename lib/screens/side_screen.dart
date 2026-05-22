@@ -204,8 +204,9 @@ class SideScreen extends StatelessWidget {
               )),
             onTap: () async {
               await context.read<AuthProvider>().signOut();
-              if(!context.mounted)
+              if(!context.mounted) {
                 return;
+              }
 
               Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false,);
             },
