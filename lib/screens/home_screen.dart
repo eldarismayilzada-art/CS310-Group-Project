@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/post_model.dart';
+import '../models/event_model.dart'; // Make sure this is here
 import '../providers/post_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart'; 
 import '../services/post_service.dart';
+import '../services/event_service.dart'; // Make sure this is here
 import '../utils/app_colors.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../screens/side_screen.dart';
@@ -16,6 +18,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final postService = PostService();
+    final eventService = EventService(); // ERROR 1 FIXED: Instantiated EventService
     final isDark = context.watch<ThemeProvider>().isDarkMode;
 
     final scaffoldBg = isDark ? const Color(0xFF121212) : const Color(0xFFF4F3FF);
@@ -48,7 +51,8 @@ class HomeScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          _buildActivityStories(isDark),
+          // ERROR 1 FIXED: Passing eventService and isDark correctly
+          _buildActivityStories(eventService, isDark),
           
           Divider(height: 1, color: dividerColor),
 
@@ -56,7 +60,6 @@ class HomeScreen extends StatelessWidget {
             child: StreamBuilder<List<PostModel>>(
               stream: postService.getPosts(),
               builder: (context, snapshot) {
-                // KRİTİK DÜZELTME: Çift yazılan connectionState hatası düzeltildi
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
@@ -91,7 +94,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Fixed: Removed the accidental copy-pasted `posts` list builder
   Widget _buildActivityStories(EventService eventService, bool isDark) {
     return Container(
       height: 115,
@@ -114,22 +116,24 @@ class HomeScreen extends StatelessWidget {
             );
           }
 
-          // Pass the actual fetched events to the reminders widget
-          return _buildActivityReminders(events);
+          // ERROR 2 FIXED: Passing both events and isDark to the next widget
+          return _buildActivityReminders(events, isDark);
         },
       ),
     );
   }
 
-  // Updated to dynamically use the passed Event list size
-  Widget _buildActivityReminders(List<EventModel> events) {
+  // ERROR 2 FIXED: Added bool isDark to method signature
+  Widget _buildActivityReminders(List<EventModel> events, bool isDark) {
     return SizedBox(
       height: 100,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: events.length,
         itemBuilder: (context, index) {
-          final titles = ['Muzikus', 'SU-Copter', 'SUTT', 'Sudance'];
+          final event = events[index]; // Get the actual event for this index
+          
           return Padding(
             padding: const EdgeInsets.only(right: 14),
             child: Column(
@@ -147,7 +151,7 @@ class HomeScreen extends StatelessWidget {
                 SizedBox(
                   width: 60,
                   child: Text(
-                    titles[index],
+                    event.clubName, // ERROR 3 FIXED: Using real dynamic data instead of the hardcoded titles array
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -155,10 +159,10 @@ class HomeScreen extends StatelessWidget {
                   ),
                 )
               ],
-                ),
-              );
-            },
-          )
+            ),
+          );
+        },
+      ),
     );
   }
 }
