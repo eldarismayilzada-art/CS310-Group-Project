@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/post_model.dart';
-import '../models/event_model.dart'; 
 import '../providers/post_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart'; 
 import '../services/post_service.dart';
-import '../services/event_service.dart'; 
 import '../utils/app_colors.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../screens/side_screen.dart';
@@ -18,7 +16,6 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final postService = PostService();
-    final eventService = EventService();
     final isDark = context.watch<ThemeProvider>().isDarkMode;
 
     final scaffoldBg = isDark ? const Color(0xFF121212) : const Color(0xFFF4F3FF);
@@ -51,7 +48,7 @@ class HomeScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
-          _buildActivityStories(eventService, isDark),
+          _buildActivityStories(isDark),
           
           Divider(height: 1, color: dividerColor),
 
@@ -59,6 +56,7 @@ class HomeScreen extends StatelessWidget {
             child: StreamBuilder<List<PostModel>>(
               stream: postService.getPosts(),
               builder: (context, snapshot) {
+                // KRİTİK DÜZELTME: Çift yazılan connectionState hatası düzeltildi
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
@@ -93,85 +91,49 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActivityStories(EventService eventService, bool isDark) {
+  Widget _buildActivityStories(bool isDark) {
     return Container(
-      height: 115,
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: StreamBuilder<List<EventModel>>(
-        stream: eventService.getTodaysEvents(), 
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: SizedBox(width: 20, child: CircularProgressIndicator(strokeWidth: 2)));
-          }
-
-          final events = snapshot.data ?? [];
-
-          if (events.isEmpty) {
-            return Center(
-              child: Text(
-                "No events scheduled for today", 
-                style: TextStyle(fontSize: 12, color: isDark ? Colors.white38 : Colors.grey, fontFamily: 'Poppins'),
-              ),
-            );
-          }
-
-          return Column(
-            children: [
-              _buildActivityReminders(),
-              const Divider(),
-              posts.isEmpty
-                  ? const Expanded(
-                      child: Center(
-                        child: Text(
-                          'No posts yet.\nBe the first to post!',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey,
-                            fontFamily: 'Poppins',
-                          ),
-                        ),
-                      ),
-                    )
-                  : Expanded(
-                      child: ListView.builder(
-                        itemCount: posts.length,
-                        itemBuilder: (context, index) {
-                          return _PostCard(post: posts[index]);
-                        },
-                      ),
-                    ),
-            ],
-          );
-        },
-      ),
-      bottomNavigationBar: const AppBottomNavBar(currentIndex: 2),
-    );
-  }
-
-  Widget _buildActivityReminders() {
-    return SizedBox(
-      height: 100,
+      height: 105, 
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: 5,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: 4, // Örnek aktivite halkası sayısı
         itemBuilder: (context, index) {
-          return const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: CircleAvatar(
-              radius: 35,
-              child: CircleAvatar(radius: 32, backgroundColor: Colors.grey),
-            ),
-          );
-        },
-      ),
+          final titles = ['Muzikus', 'SU-Copter', 'SUTT', 'Sudance'];
+          return Padding(
+            padding: const EdgeInsets.only(right: 14),
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: AppColors.primary.withOpacity(0.15),
+                  child: const CircleAvatar(
+                    radius: 27,
+                    backgroundColor: AppColors.primary,
+                    child: Icon(Icons.star_rounded, color: Colors.white, size: 24),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                SizedBox(
+                  width: 60,
+                  child: Text(
+                    titles[index],
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 10, color: isDark ? Colors.white70 : Colors.black87, fontFamily: 'Poppins'),
+                  ),
+                )
+              ],
+                ),
+              );
+            },
+          )
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Search delegate — searches posts by club name or caption
-// ─────────────────────────────────────────────────────────────
 class _PostSearchDelegate extends SearchDelegate<String> {
   final PostService postService;
 
@@ -192,8 +154,7 @@ class _PostSearchDelegate extends SearchDelegate<String> {
         border: InputBorder.none,
       ),
       textTheme: const TextTheme(
-        titleLarge: TextStyle(
-            color: Colors.white, fontFamily: 'Poppins', fontSize: 16),
+        titleLarge: TextStyle(color: Colors.white, fontFamily: 'Poppins', fontSize: 16),
       ),
     );
   }
@@ -222,8 +183,7 @@ class _PostSearchDelegate extends SearchDelegate<String> {
   Widget _buildSearchResults(BuildContext context) {
     if (query.trim().isEmpty) {
       return const Center(
-        child: Text('Type to search posts or clubs',
-            style: TextStyle(fontFamily: 'Poppins', color: Colors.grey)),
+        child: Text('Type to search posts or clubs', style: TextStyle(fontFamily: 'Poppins', color: Colors.grey)),
       );
     }
 
@@ -236,15 +196,12 @@ class _PostSearchDelegate extends SearchDelegate<String> {
 
         final q = query.toLowerCase();
         final results = snapshot.data!.where((p) {
-          return p.clubName.toLowerCase().contains(q) ||
-              p.caption.toLowerCase().contains(q);
+          return p.clubName.toLowerCase().contains(q) || p.caption.toLowerCase().contains(q);
         }).toList();
 
         if (results.isEmpty) {
           return Center(
-            child: Text('No results for "$query"',
-                style:
-                    const TextStyle(fontFamily: 'Poppins', color: Colors.grey)),
+            child: Text('No results for "$query"', style: const TextStyle(fontFamily: 'Poppins', color: Colors.grey)),
           );
         }
 
@@ -254,9 +211,7 @@ class _PostSearchDelegate extends SearchDelegate<String> {
             final post = results[index];
             return ListTile(
               leading: const CircleAvatar(child: Icon(Icons.group)),
-              title: Text(post.clubName,
-                  style: const TextStyle(
-                      fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
+              title: Text(post.clubName, style: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
               subtitle: Text(
                 post.caption,
                 maxLines: 1,
@@ -274,9 +229,7 @@ class _PostSearchDelegate extends SearchDelegate<String> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Post card (unchanged)
-// ─────────────────────────────────────────────────────────────
+
 class _PostCard extends StatelessWidget {
   final PostModel post;
   final bool isDark;
@@ -286,7 +239,7 @@ class _PostCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final postProvider = context.read<PostProvider>();
-    final currentUserId = auth.firebaseUser?.uid ?? '';
+    final currentUserId = auth.userModel?.id ?? ''; 
     final isLiked = post.likes.contains(currentUserId);
     final isOwner = post.createdBy == currentUserId;
 
@@ -298,12 +251,9 @@ class _PostCard extends StatelessWidget {
       children: [
         ListTile(
           leading: const CircleAvatar(child: Icon(Icons.person)),
-          title: Text(post.clubName,
-              style: const TextStyle(
-                  fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
+          title: Text(post.clubName, style: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
           subtitle: post.location != null
-              ? Text(post.location!,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey))
+              ? Text(post.location!, style: const TextStyle(fontSize: 12, color: Colors.grey))
               : null,
           trailing: isOwner
               ? PopupMenuButton<String>(
@@ -315,19 +265,21 @@ class _PostCard extends StatelessWidget {
                   itemBuilder: (_) => [
                     const PopupMenuItem(
                       value: 'delete',
-                      child: Row(children: [
-                        Icon(Icons.delete, color: Colors.red),
-                        SizedBox(width: 8),
-                        Text('Delete'),
-                      ]),
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Delete'),
+                        ],
+                      ),
                     ),
                   ],
                 )
               : null,
         ),
 
-        // Post image
-        post.imageUrl != null
+        // Post Image
+        post.imageUrl != null && post.imageUrl!.isNotEmpty
             ? Image.network(
                 post.imageUrl!,
                 height: 250,
@@ -337,17 +289,14 @@ class _PostCard extends StatelessWidget {
             : Container(
                 height: 250,
                 width: double.infinity,
-                color: Colors.grey[300],
-                child: const Center(
-                    child: Icon(Icons.image, size: 50, color: Colors.grey)),
+                color: isDark ? Colors.white10 : Colors.grey[300],
+                child: Center(child: Icon(Icons.image, size: 50, color: subText)),
               ),
 
         if (post.caption.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            child: Text(post.caption,
-                style:
-                    const TextStyle(fontFamily: 'Poppins', fontSize: 13)),
+            child: Text(post.caption, style: TextStyle(fontFamily: 'Poppins', fontSize: 13, color: mainText)),
           ),
 
         Padding(
@@ -359,12 +308,10 @@ class _PostCard extends StatelessWidget {
                   isLiked ? Icons.favorite : Icons.favorite_border,
                   color: isLiked ? Colors.red : subText,
                 ),
-                onPressed: () =>
-                    postProvider.toggleLike(post.id, currentUserId),
+                onPressed: () => postProvider.toggleLike(post.id, currentUserId),
               ),
               Text('${post.likes.length}', style: TextStyle(color: mainText)),
               const SizedBox(width: 15),
-        
               IconButton(
                 icon: Icon(Icons.chat_bubble_outline, color: subText),
                 onPressed: () {
