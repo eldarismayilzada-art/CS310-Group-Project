@@ -34,7 +34,6 @@ class AuthProvider extends ChangeNotifier {
     });
   }
 
-  
   Future<void> loadCurrentUser() async {
     if (_firebaseUser != null) {
       await _loadUserModel(_firebaseUser!.uid);
@@ -86,6 +85,7 @@ class AuthProvider extends ChangeNotifier {
     required String email,
     required String password,
     required String username,
+    required String role,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -96,7 +96,26 @@ class AuthProvider extends ChangeNotifier {
         email: email,
         password: password,
         username: username,
+        role: role, 
       );
+
+      final currentUser = FirebaseAuth.instance.currentUser;
+      
+      if (currentUser != null) {
+        final newUserModel = UserModel(
+          id: currentUser.uid, 
+          email: email,
+          username: username,
+          role: role,
+          interests: [],
+          bio: '',
+          onboardingComplete: role == 'club', 
+        );
+
+        await _db.collection('users').doc(currentUser.uid).set(newUserModel.toFirestore());
+        _userModel = newUserModel;
+      }
+
       _isLoading = false;
       notifyListeners();
       return true;
@@ -139,6 +158,7 @@ class AuthProvider extends ChangeNotifier {
 
   Future<bool> hasCompletedOnboarding() async {
     if (_firebaseUser == null) return false;
+    if (_userModel != null) return _userModel!.onboardingComplete;
     return _authService.hasCompletedOnboarding(_firebaseUser!.uid);
   }
 
