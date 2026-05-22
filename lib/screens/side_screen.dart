@@ -14,8 +14,8 @@ class SideScreen extends StatelessWidget {
     final isDark = context.watch<ThemeProvider>().isDarkMode;
 
     final drawerBg = isDark ? const Color(0xFF1A1A2E) : const Color(0xFFF4F3FF);
-    final textColor = isDark ? Colors.white : Colors.black54;
-    final subTextColor = isDark ? Colors.white60 : Colors.white70;
+    final textColor = isDark ? Colors.white : const Color(0xFF333333); 
+    final subTextColor = isDark ? Colors.white60 : Colors.black45;
     final dividerColor = isDark ? Colors.white12 : Colors.black12;
 
     return Drawer(
@@ -27,9 +27,14 @@ class SideScreen extends StatelessWidget {
           // --- PROFILE HEADER ---
           InkWell(
             onTap: () {
-              Navigator.pop(context);
+              final navigator = Navigator.of(context);
               final profileRoute = user?.role == 'club' ? '/profile/club' : '/profile/student';
-              Navigator.pushReplacementNamed(context, profileRoute);
+              
+              navigator.pop();
+
+              Future.microtask(() {
+                navigator.pushReplacementNamed(profileRoute);
+              });
             },
             child: DrawerHeader(
               margin: EdgeInsets.zero,
@@ -86,8 +91,11 @@ class SideScreen extends StatelessWidget {
             leading: const Icon(Icons.article_rounded, color: AppColors.primary),
             title: Text('Posts', style: TextStyle(fontFamily: 'Poppins', color: textColor)),
             onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+              final navigator = Navigator.of(context);
+              navigator.pop();
+              Future.microtask(() {
+                navigator.pushNamedAndRemoveUntil('/home', (route) => false);
+              });
             },
           ),
           Divider(height: 1, color: dividerColor),
@@ -103,8 +111,11 @@ class SideScreen extends StatelessWidget {
                 contentPadding: const EdgeInsets.only(left: 40),
                 title: Text('Monthly', style: TextStyle(fontFamily: 'Poppins', color: textColor)),
                 onTap: () {
-                  Navigator.pop(context);
-                  Navigator.pushReplacementNamed(context, '/calendar');
+                  final navigator = Navigator.of(context);
+                  navigator.pop();
+                  Future.microtask(() {
+                    navigator.pushReplacementNamed('/calendar');
+                  });
                 },
               ),
             ],
@@ -116,31 +127,42 @@ class SideScreen extends StatelessWidget {
             leading: const Icon(Icons.person_rounded, color: AppColors.primary),
             title: Text('Profile', style: TextStyle(fontFamily: 'Poppins', color: textColor)),
             onTap: () {
-              Navigator.pop(context);
+              final navigator = Navigator.of(context);
+              navigator.pop();
               final profileRoute = user?.role == 'club' ? '/profile/club' : '/profile/student';
-              Navigator.pushReplacementNamed(context, profileRoute);
+              Future.microtask(() {
+                navigator.pushReplacementNamed(profileRoute);
+              });
             },
           ),
           Divider(height: 1, color: dividerColor),
 
+          // --- ONLY CLUBS CAN SEE ---
           if (user?.role == 'club') ...[
             ListTile(
               leading: const Icon(Icons.add_photo_alternate_rounded, color: AppColors.primary),
               title: Text('Create Post', style: TextStyle(fontFamily: 'Poppins', color: textColor)),
               onTap: () {
-                Navigator.pop(context);
-                Navigator.pushReplacementNamed(context, '/post/pick');
+                final navigator = Navigator.of(context);
+                navigator.pop();
+                Future.microtask(() {
+                  navigator.pushReplacementNamed('/post/pick');
+                });
               },
             ),
             Divider(height: 1, color: dividerColor),
           ],
 
+          // --- SETTINGS ---
           ListTile(
             leading: const Icon(Icons.settings_outlined, color: AppColors.primary),
             title: Text('Settings', style: TextStyle(fontFamily: 'Poppins', color: textColor)),
             onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/settings'); 
+              final navigator = Navigator.of(context);
+              navigator.pop();
+              Future.microtask(() {
+                navigator.pushNamed('/settings');
+              });
             },
           ),
 
@@ -159,9 +181,11 @@ class SideScreen extends StatelessWidget {
               ),
             ),
             onTap: () async {
+              final navigator = Navigator.of(context);
               await context.read<AuthProvider>().signOut();
-              if (!context.mounted) return;
-              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+              Future.microtask(() {
+                navigator.pushNamedAndRemoveUntil('/login', (route) => false);
+              });
             },
           ),
           const SizedBox(height: 12),
