@@ -1,18 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; 
 import '../models/comment_model.dart';
-import '../services/comment_service.dart';
 
 class CommentProvider extends ChangeNotifier {
-  final CommentService _commentService = CommentService();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  bool _isLoading = false;
   String? _errorMessage;
+  bool _isLoading = false;
 
-  bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  bool get isLoading => _isLoading;
 
   Stream<List<CommentModel>> commentsStream(String postId) {
-    return _commentService.getComments(postId);
+    return _firestore
+        .collection('comments')
+        .where('postId', isEqualTo: postId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            return CommentModel.fromFirestore(doc);
+          }).toList();
+        });
   }
 
   Future<bool> createComment(CommentModel comment) async {
@@ -21,64 +30,9 @@ class CommentProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _commentService.createComment(comment);
-      _isLoading = false;
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _errorMessage = e.toString();
-      _isLoading = false;
-      notifyListeners();
-      return false;
-    }
-  }
-
-  Future<bool> updateComment({
-    required String postId, 
-    required String commentId,
-    required String text,
-    required double fontSize,
-    required int textColor,
-    required String fontFamily,
-  }) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-
-    try {
-      await _commentService.updateComment(
-        postId: postId,
-        commentId: commentId,
-        text: text,
-        fontSize: fontSize,
-        textColor: textColor,
-        fontFamily: fontFamily,
-      );
-
-      _isLoading = false;
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _errorMessage = e.toString();
-      _isLoading = false;
-      notifyListeners();
-      return false;
-    }
-  }
-
-  Future<bool> deleteComment({
-    required String postId,
-    required String commentId,
-  }) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-
-    try {
-      await _commentService.deleteComment(
-        postId: postId,
-        commentId: commentId,
-      );
+      await _firestore
+          .collection('comments')
+          .add(comment.toFirestore());
 
       _isLoading = false;
       notifyListeners();
