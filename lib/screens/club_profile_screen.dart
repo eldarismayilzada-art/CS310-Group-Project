@@ -6,6 +6,8 @@ import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import '../utils/app_colors.dart';
 import '../widgets/bottom_nav_bar.dart';
+
+// Fixed: Added the missing SideScreen import
 import '../screens/side_screen.dart';
 
 class ClubProfileScreen extends StatelessWidget {

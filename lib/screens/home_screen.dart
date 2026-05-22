@@ -91,14 +91,43 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActivityStories(bool isDark) {
+  // Fixed: Removed the accidental copy-pasted `posts` list builder
+  Widget _buildActivityStories(EventService eventService, bool isDark) {
     return Container(
-      height: 105, 
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      height: 115,
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: StreamBuilder<List<EventModel>>(
+        stream: eventService.getTodaysEvents(), 
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: SizedBox(width: 20, child: CircularProgressIndicator(strokeWidth: 2)));
+          }
+
+          final events = snapshot.data ?? [];
+
+          if (events.isEmpty) {
+            return Center(
+              child: Text(
+                "No events scheduled for today", 
+                style: TextStyle(fontSize: 12, color: isDark ? Colors.white38 : Colors.grey, fontFamily: 'Poppins'),
+              ),
+            );
+          }
+
+          // Pass the actual fetched events to the reminders widget
+          return _buildActivityReminders(events);
+        },
+      ),
+    );
+  }
+
+  // Updated to dynamically use the passed Event list size
+  Widget _buildActivityReminders(List<EventModel> events) {
+    return SizedBox(
+      height: 100,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: 4, // Örnek aktivite halkası sayısı
+        itemCount: events.length,
         itemBuilder: (context, index) {
           final titles = ['Muzikus', 'SU-Copter', 'SUTT', 'Sudance'];
           return Padding(
@@ -134,6 +163,9 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// Search delegate
+// ─────────────────────────────────────────────────────────────
 class _PostSearchDelegate extends SearchDelegate<String> {
   final PostService postService;
 
@@ -229,7 +261,9 @@ class _PostSearchDelegate extends SearchDelegate<String> {
   }
 }
 
-
+// ─────────────────────────────────────────────────────────────
+// Post card
+// ─────────────────────────────────────────────────────────────
 class _PostCard extends StatelessWidget {
   final PostModel post;
   final bool isDark;

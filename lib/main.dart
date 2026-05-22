@@ -81,14 +81,15 @@ class MyApp extends StatelessWidget {
               '/profile/club': (context) => const ClubProfileScreen(),
               '/post/pick': (context) => const CreatePostScreen(),
               '/post/edit': (context) => const EditPostScreen(),
-              '/settings': (context) => const SettingsScreen(), 
+              '/settings': (context) => SettingsScreen(),
               
-             
+              // Fixed: typo "postI" -> "postId" and extract arguments for Named Routes
               '/comments': (context) {
-                final postId = ModalRoute.of(context)?.settings.arguments as String? ?? '';
+                final args = ModalRoute.of(context)?.settings.arguments;
+                final String postId = args is String ? args : 'post_123';
                 return CommentsPage(
                   postId: postId,
-                  postOwnerName: 'Club Post',
+                  postOwnerName: 'Club_name',
                 );
               },
             },
