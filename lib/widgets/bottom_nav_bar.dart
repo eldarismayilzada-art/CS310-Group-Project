@@ -1,26 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart'; 
+import '../providers/auth_provider.dart'; 
 import '../utils/app_colors.dart';
 
 class AppBottomNavBar extends StatelessWidget {
   final int currentIndex;
   const AppBottomNavBar({super.key, required this.currentIndex});
 
-  void _onTap(BuildContext context, int index) {
+  void _onTap(NavigatorState navigator, String? role, int index) {
     if (index == currentIndex) return;
- 
+
     switch (index) {
-      case 0: Navigator.pushReplacementNamed(context, '/profile/student'); break;
-      case 1: Navigator.pushReplacementNamed(context, '/calendar'); break;
-      case 2: Navigator.pushReplacementNamed(context, '/home'); break;
-      case 3: Navigator.pushReplacementNamed(context, '/post/pick'); break;
+      case 0: 
+        final profileRoute = role == 'club' ? '/profile/club' : '/profile/student';
+        navigator.pushReplacementNamed(profileRoute); 
+        break;
+      case 1: 
+        navigator.pushReplacementNamed('/calendar'); 
+        break;
+      case 2: 
+        navigator.pushReplacementNamed('/home'); 
+        break;
+      case 3: 
+        navigator.pushReplacementNamed('/post/pick'); 
+        break;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = context.watch<ThemeProvider>().isDarkMode;
+    final auth = context.watch<AuthProvider>();
+    final userRole = auth.userModel?.role; 
 
     final barBgColor = isDark ? const Color(0xFF1E1E2E) : Colors.white;
     final unselectedColor = isDark ? Colors.white38 : const Color(0xFFAAAAAA);
@@ -53,7 +65,7 @@ class AppBottomNavBar extends StatelessWidget {
               final active = i == currentIndex;
               return Expanded(
                 child: GestureDetector(
-                  onTap: () => _onTap(context, i),
+                  onTap: () => _onTap(Navigator.of(context), userRole, i),
                   behavior: HitTestBehavior.opaque,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
