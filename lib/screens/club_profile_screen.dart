@@ -6,8 +6,7 @@ import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import '../utils/app_colors.dart';
 import '../widgets/bottom_nav_bar.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
+import '../screens/side_screen.dart';
 
 class ClubProfileScreen extends StatelessWidget {
   const ClubProfileScreen({super.key});
