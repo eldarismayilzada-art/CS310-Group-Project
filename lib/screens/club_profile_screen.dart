@@ -6,6 +6,7 @@ import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import '../utils/app_colors.dart';
 import '../widgets/bottom_nav_bar.dart';
+import 'side_screen.dart'; 
 
 class ClubProfileScreen extends StatelessWidget {
   const ClubProfileScreen({super.key});
@@ -18,11 +19,11 @@ class ClubProfileScreen extends StatelessWidget {
 
     final user = auth.userModel;
     final currentUserId = auth.firebaseUser?.uid ?? '';
-
     final scaffoldBg = isDark ? const Color(0xFF121212) : const Color(0xFFF4F3FF);
     final cardColor = isDark ? const Color(0xFF1E1E2E) : Colors.white;
     final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
-    final drawerBg = isDark ? const Color(0xFF1A1A2E) : Colors.white;
+
+    final clubInterests = user?.interests ?? [];
 
     return Scaffold(
       backgroundColor: scaffoldBg,
@@ -59,7 +60,8 @@ class ClubProfileScreen extends StatelessWidget {
           ),
         ],
       ),
-      drawer: _SideDrawer(drawerBg: drawerBg, textColor: textColor),
+
+      drawer: const SideScreen(), 
       body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
@@ -114,7 +116,54 @@ class ClubProfileScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
+
+                    if (clubInterests.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        alignment: WrapAlignment.center,
+                        children: clubInterests.map((interest) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: isDark ? Colors.white.withOpacity(0.08) : Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: AppColors.primary.withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              interest,
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: isDark ? Colors.white70 : AppColors.primary,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+
+                    const SizedBox(height: 16),
+
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.edit_note_rounded, size: 20),
+                      label: const Text('Edit Club Tags'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      ),
+                      onPressed: () => _showClubEditDialog(context, auth, isDark),
+                    ),
+
+                    const SizedBox(height: 24),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -149,7 +198,11 @@ class ClubProfileScreen extends StatelessWidget {
                   child: Center(
                     child: Padding(
                       padding: const EdgeInsets.all(20),
-                      child: Text('Error: ${snapshot.error}', style: TextStyle(color: textColor)),
+                      child: Text(
+                        'Database index is creating, please wait a few minutes...', 
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: textColor, fontFamily: 'Poppins', fontSize: 13),
+                      ),
                     ),
                   ),
                 );
@@ -247,67 +300,122 @@ class _PostThumbnail extends StatelessWidget {
   }
 }
 
-class _SideDrawer extends StatelessWidget {
-  const _SideDrawer({required this.drawerBg, required this.textColor});
-  final Color drawerBg;
-  final Color textColor;
+void _showClubEditDialog(BuildContext context, AuthProvider auth, bool isDark) {
+  final user = auth.userModel;
+  if (user == null) return;
 
-  @override
-  Widget build(BuildContext context) {
-    final items = [
-      _DrawerItem(Icons.person_rounded, 'Profile', '/profile/student'),
-      _DrawerItem(Icons.calendar_month_rounded, 'Calendar – Monthly', '/calendar'),
-      _DrawerItem(Icons.today_rounded, 'Calendar – Daily', '/calendar'),
-      _DrawerItem(Icons.article_rounded, 'Posts', '/home'),
-      _DrawerItem(Icons.add_photo_alternate_rounded, 'Create Posts', '/post/pick'),
-      _DrawerItem(Icons.settings_rounded, 'Settings', '/settings'),
-    ];
+  final Set<String> selectedTags = Set.from(user.interests);
 
-    return Drawer(
-      backgroundColor: drawerBg,
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              color: AppColors.primary,
-              child: const Text(
-                'ClubConnect',
+  const clubCategoryPool = [
+    'Music', 'Cinema', 'Coding', 'Sports',
+    'Art', 'Photography', 'Gaming', 'Dance',
+    'Theater', 'Aviation', 'Literature', 'Social Resp.',
+  ];
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: isDark ? const Color(0xFF1E1E2E) : Colors.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setPanelState) => Padding(
+        padding: EdgeInsets.only(
+          left: 24, right: 24, top: 24,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Edit Club Categories',
                 style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 22,
+                  fontSize: 18, 
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: isDark ? Colors.white : Colors.black,
+                  fontFamily: 'Poppins',
                 ),
               ),
-            ),
-            ...items.map((item) => ListTile(
-                  leading: Icon(item.icon, color: AppColors.primary),
-                  title: Text(
-                    item.label,
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
-                      color: textColor,
+              const SizedBox(height: 8),
+              Text(
+                'Select categories that represent your club activities.',
+                style: TextStyle(
+                  fontSize: 12, 
+                  color: isDark ? Colors.white60 : Colors.grey,
+                  fontFamily: 'Poppins',
+                ),
+              ),
+              const SizedBox(height: 20),
+              
+              Wrap(
+                spacing: 8, 
+                runSpacing: 10,
+                children: clubCategoryPool.map((tag) {
+                  final isSelected = selectedTags.contains(tag);
+                  return GestureDetector(
+                    onTap: () => setPanelState(() {
+                      if (isSelected) {
+                        selectedTags.remove(tag);
+                      } else {
+                        selectedTags.add(tag);
+                      }
+                    }),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected ? AppColors.primary : (isDark ? Colors.white10 : Colors.grey[200]),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isSelected ? AppColors.primary : (isDark ? Colors.white10 : Colors.transparent),
+                        ),
+                      ),
+                      child: Text(
+                        tag,
+                        style: TextStyle(
+                          color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
+                          fontWeight: FontWeight.w500,
+                          fontSize: 13,
+                          fontFamily: 'Poppins',
+                        ),
+                      ),
                     ),
+                  );
+                }).toList(),
+              ),
+              
+              const SizedBox(height: 28),
+              
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
                   ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, item.route);
+                  onPressed: () async {
+                    await auth.saveOnboarding(
+                      interests: selectedTags.toList(),
+                      bio: user.bio, 
+                    );
+                    if (!ctx.mounted) return;
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Club profile updated successfully!')),
+                    );
                   },
-                )),
-          ],
+                  child: const Text('Save Categories', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    );
-  }
-}
-
-class _DrawerItem {
-  final IconData icon;
-  final String label;
-  final String route;
-  const _DrawerItem(this.icon, this.label, this.route);
+    ),
+  );
 }
