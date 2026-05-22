@@ -7,13 +7,13 @@ import '../providers/theme_provider.dart';
 import '../utils/app_colors.dart'; 
 
 class CommentsPage extends StatefulWidget {
-  final String postId; 
-  final String postOwnerName;
+  final String? postId; 
+  final String? postOwnerName;
 
   const CommentsPage({
     super.key,
-    required this.postId,
-    required this.postOwnerName,
+    this.postId,
+    this.postOwnerName,
   });
 
   @override
@@ -64,7 +64,7 @@ class _CommentsPageState extends State<CommentsPage> {
     });
   }
 
-  void _postComment() async {
+  void _postComment(String targetPostId) async {
     final text = _commentController.text.trim();
     if (text.isEmpty) return;
 
@@ -73,10 +73,10 @@ class _CommentsPageState extends State<CommentsPage> {
 
     final newComment = CommentModel(
       id: '', 
-      postId: widget.postId,
+      postId: targetPostId,
       text: text,
       authorName: auth.userModel?.username ?? 'Anonymous',
-      createdBy: auth.firebaseUser?.uid ?? '',
+      createdBy: auth.userModel?.id ?? '', 
       createdAt: DateTime.now(),
       fontSize: _selectedFontSize,
       textColor: _colorMap[_selectedColor] ?? 0xFF000000, 
@@ -137,7 +137,7 @@ class _CommentsPageState extends State<CommentsPage> {
                 backgroundColor: Colors.blueAccent.withOpacity(0.2),
                 child: Text(
                   comment.authorName.isNotEmpty ? comment.authorName[0].toUpperCase() : 'U',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black),
                 ),
               ),
               const SizedBox(width: 10),
@@ -165,7 +165,7 @@ class _CommentsPageState extends State<CommentsPage> {
             comment.text,
             style: TextStyle(
               fontSize: comment.fontSize,
-              color: Color(comment.textColor), 
+              color: isDark && comment.textColor == 0xFF000000 ? Colors.white : Color(comment.textColor), 
               fontFamily: comment.fontFamily,
             ),
           ),
@@ -201,7 +201,7 @@ class _CommentsPageState extends State<CommentsPage> {
                 const SizedBox(width: 10),
                 Text(
                   'Write a comment...',
-                  style: TextStyle(color: isDark ? Colors.white60 : Colors.black54),
+                  style: TextStyle(color: isDark ? Colors.white60 : Colors.black54, fontFamily: 'Poppins'),
                 ),
               ],
             ),
@@ -211,7 +211,7 @@ class _CommentsPageState extends State<CommentsPage> {
     );
   }
 
-  Widget _buildExpandedEditor(bool isDark) {
+  Widget _buildExpandedEditor(bool isDark, String targetPostId) {
     return SafeArea(
       top: false,
       child: Container(
@@ -229,7 +229,7 @@ class _CommentsPageState extends State<CommentsPage> {
               children: [
                 Text(
                   'Comment Editor',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black, fontFamily: 'Poppins'),
                 ),
                 const Spacer(),
                 IconButton(
@@ -243,10 +243,10 @@ class _CommentsPageState extends State<CommentsPage> {
             DropdownButtonFormField<String>(
               value: _selectedFontFamily,
               dropdownColor: isDark ? const Color(0xFF2E2E3E) : Colors.white,
-              style: TextStyle(color: isDark ? Colors.white : Colors.black), 
+              style: TextStyle(color: isDark ? Colors.white : Colors.black, fontFamily: 'Poppins'), 
               decoration: InputDecoration(
                 labelText: 'Font',
-                labelStyle: TextStyle(color: isDark ? Colors.white70 : Colors.black54), 
+                labelStyle: TextStyle(color: isDark ? Colors.white70 : Colors.black54, fontFamily: 'Poppins'), 
                 border: const OutlineInputBorder(),
               ),
               items: _fontFamilies.map((font) {
@@ -346,14 +346,15 @@ class _CommentsPageState extends State<CommentsPage> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: _toggleExpanded,
-                    child: const Text('Cancel'),
+                    child: const Text('Cancel', style: TextStyle(fontFamily: 'Poppins')),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _postComment,
-                    child: const Text('Post'),
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+                    onPressed: () => _postComment(targetPostId),
+                    child: const Text('Post', style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -370,18 +371,35 @@ class _CommentsPageState extends State<CommentsPage> {
     final isDark = context.watch<ThemeProvider>().isDarkMode;
     final scaffoldBg = isDark ? const Color(0xFF121212) : const Color(0xFFF4F3FF);
 
+    final String effectivePostId = (widget.postId != null && widget.postId!.isNotEmpty)
+        ? widget.postId!
+        : (ModalRoute.of(context)?.settings.arguments as String? ?? '');
+
+    if (effectivePostId.isEmpty) {
+      return Scaffold(
+        backgroundColor: scaffoldBg,
+        appBar: AppBar(backgroundColor: AppColors.primary, title: const Text('Comments')),
+        body: const Center(
+          child: Text(
+            'Error: Post ID could not be loaded.',
+            style: TextStyle(fontFamily: 'Poppins', fontSize: 14, color: Colors.red),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: scaffoldBg,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        title: const Text('Comments', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('Comments', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontFamily: 'Poppins')),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Column(
         children: [
           Expanded(
             child: StreamBuilder<List<CommentModel>>(
-              stream: commentProvider.commentsStream(widget.postId), 
+              stream: commentProvider.commentsStream(effectivePostId), 
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -413,7 +431,7 @@ class _CommentsPageState extends State<CommentsPage> {
               },
             ),
           ),
-          _isExpanded ? _buildExpandedEditor(isDark) : _buildCollapsedBar(isDark),
+          _isExpanded ? _buildExpandedEditor(isDark, effectivePostId) : _buildCollapsedBar(isDark),
         ],
       ),
     );
