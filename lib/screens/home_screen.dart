@@ -284,39 +284,52 @@ class _PostCard extends StatelessWidget {
         ),
 
         // Post Image
-        post.imageUrl != null && post.imageUrl!.isNotEmpty
-            ? Image.network(
-                post.imageUrl!,
-                height: 250,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    height: 250,
-                    width: double.infinity,
-                    color: isDark ? Colors.white10 : Colors.grey[200],
-                    child: const Center(
-                      child: SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
-                      ),
-                    ),
-                  );
-                },
-              )
+        post.imagePath != null && post.imagePath!.isNotEmpty
+            ? SizedBox(
+          height: 250,
+          width: double.infinity,
+          child: Image.asset(
+            post.imagePath!,
+            fit: BoxFit.contain,
+          ),
+        )
             : Container(
-                height: 250,
-                width: double.infinity,
-                color: isDark ? Colors.white10 : Colors.grey[300],
-                child: Center(child: Icon(Icons.image, size: 50, color: subText)),
-              ),
+          height: 250,
+          width: double.infinity,
+          color: isDark ? Colors.white10 : Colors.grey[300],
+          child: Center(child: Icon(Icons.image, size: 50, color: subText)),
+        ),
 
         if (post.caption.isNotEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: Text(post.caption, style: TextStyle(fontFamily: 'Poppins', fontSize: 13, color: mainText)),
+          ),
+        if (post.date != null && post.date!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+            child: Text(
+              'Date: ${post.date}',
+              style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: subText),
+            ),
+          ),
+
+        if (post.audio != null && post.audio!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+            child: Text(
+              'Audio: ${post.audio}',
+              style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: subText),
+            ),
+          ),
+
+        if (post.tagPeople != null && post.tagPeople!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+            child: Text(
+              'Tagged: ${post.tagPeople}',
+              style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: subText),
+            ),
           ),
 
         Padding(

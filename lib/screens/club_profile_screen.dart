@@ -273,7 +273,7 @@ class _PostThumbnail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String? path = post.imageUrl;
+    final String? path = post.imagePath;
 
     return GestureDetector(
       onTap: onTap,
@@ -282,22 +282,12 @@ class _PostThumbnail extends StatelessWidget {
         child: Container(
           color: cardColor,
           child: path != null && path.isNotEmpty
-              ? Image.network(
+              ? Image.asset(
                   path,
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => const Center(
                     child: Icon(Icons.broken_image, color: Colors.grey, size: 24),
                   ),
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return const Center(
-                      child: SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 1.5, color: AppColors.primary),
-                      ),
-                    );
-                  },
                 )
               : const Center(
                   child: Icon(Icons.article_outlined, color: AppColors.primary, size: 28),

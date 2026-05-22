@@ -12,16 +12,20 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
   final List<String> fakeimages = [
     'assets/images/post1.jpeg',
-    'assets/images/post1.jpeg',
-    'assets/images/post1.jpeg',
-    'assets/images/post1.jpeg',
-    'assets/images/post1.jpeg',
-    'assets/images/post1.jpeg',
+    'assets/images/img1.jpeg',
+    'assets/images/img2.jpeg',
+    'assets/images/img3.jpeg',
+    'assets/images/img4.jpeg',
+    'assets/images/img5.jpeg',
+    'assets/images/img6.jpeg',
+    'assets/images/img7.jpeg',
+    'assets/images/img8.jpeg',
+    'assets/images/img9.jpeg',
   ];
 
   @override
   Widget build(BuildContext context) {
-    final imgSelected = fakeimages[img_selected_index];
+    final img_selected = fakeimages[img_selected_index];
 
     return Scaffold(
       appBar: AppBar(
@@ -40,8 +44,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                 borderRadius: BorderRadius.circular(16),
                 color: Colors.grey.shade200,
                 image: DecorationImage(
-                  image: NetworkImage(imgSelected),
-                  fit: BoxFit.cover,
+                  image: AssetImage(img_selected),
+                  fit: BoxFit.contain,
                 ),
               ),
             ),
@@ -90,7 +94,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                         ),
                         borderRadius: BorderRadius.circular(12),
                         image: DecorationImage(
-                          image: NetworkImage(fakeimages[index]),
+                          image: AssetImage(fakeimages[index]),
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -125,7 +129,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                     Navigator.pushNamed(
                       context,
                       '/post/edit',
-                      arguments: imgSelected,
+                      arguments: img_selected,
                     );
                   },
                   icon: const Icon(Icons.arrow_forward),
