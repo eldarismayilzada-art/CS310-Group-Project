@@ -22,8 +22,11 @@ class AppBottomNavBar extends StatelessWidget {
       case 2: 
         navigator.pushReplacementNamed('/home'); 
         break;
-      case 3: 
-        navigator.pushReplacementNamed('/post/pick'); 
+      case 3:
+        if (role == 'club')
+        {
+          navigator.pushReplacementNamed('/post/pick');
+        }
         break;
     }
   }
@@ -42,7 +45,8 @@ class AppBottomNavBar extends StatelessWidget {
       _NavItem(icon: Icons.person_rounded, label: 'Profile'),
       _NavItem(icon: Icons.calendar_month_rounded, label: 'Calendar'),
       _NavItem(icon: Icons.article_rounded, label: 'Posts'),
-      _NavItem(icon: Icons.add_circle_rounded, label: 'Create'),
+      if (userRole == 'club')
+        _NavItem(icon: Icons.add_circle_rounded, label: 'Create'),
     ];
 
     return Container(
