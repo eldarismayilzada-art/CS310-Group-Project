@@ -8,7 +8,6 @@ import '../services/post_service.dart';
 import '../utils/app_colors.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../screens/side_screen.dart';
-import '../screens/comments_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -48,15 +47,16 @@ class HomeScreen extends StatelessWidget {
       ),
       body: Column(
         children: [
+          // ÜST ALAN: Sabit, şık bir hikaye/aktivite barı tasarımı
           _buildActivityStories(isDark),
           
           Divider(height: 1, color: dividerColor),
 
+          // ALT ALAN: Ana Akış (Posts Stream)
           Expanded(
             child: StreamBuilder<List<PostModel>>(
               stream: postService.getPosts(),
               builder: (context, snapshot) {
-                // KRİTİK DÜZELTME: Çift yazılan connectionState hatası düzeltildi
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
@@ -98,7 +98,7 @@ class HomeScreen extends StatelessWidget {
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: 4, // Örnek aktivite halkası sayısı
+        itemCount: 4, 
         itemBuilder: (context, index) {
           final titles = ['Muzikus', 'SU-Copter', 'SUTT', 'Sudance'];
           return Padding(
@@ -126,14 +126,17 @@ class HomeScreen extends StatelessWidget {
                   ),
                 )
               ],
-                ),
-              );
-            },
-          )
+            ),
+          );
+        },
+      ),
     );
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// Search delegate
+// ─────────────────────────────────────────────────────────────
 class _PostSearchDelegate extends SearchDelegate<String> {
   final PostService postService;
 
@@ -229,7 +232,9 @@ class _PostSearchDelegate extends SearchDelegate<String> {
   }
 }
 
-
+// ─────────────────────────────────────────────────────────────
+// Post card
+// ─────────────────────────────────────────────────────────────
 class _PostCard extends StatelessWidget {
   final PostModel post;
   final bool isDark;
@@ -285,6 +290,21 @@ class _PostCard extends StatelessWidget {
                 height: 250,
                 width: double.infinity,
                 fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    height: 250,
+                    width: double.infinity,
+                    color: isDark ? Colors.white10 : Colors.grey[200],
+                    child: const Center(
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                      ),
+                    ),
+                  );
+                },
               )
             : Container(
                 height: 250,
@@ -312,17 +332,14 @@ class _PostCard extends StatelessWidget {
               ),
               Text('${post.likes.length}', style: TextStyle(color: mainText)),
               const SizedBox(width: 15),
+              
               IconButton(
                 icon: Icon(Icons.chat_bubble_outline, color: subText),
                 onPressed: () {
-                  Navigator.push(
+                  Navigator.pushNamed(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => CommentsPage(
-                        postId: post.id,
-                        postOwnerName: post.clubName,
-                      ),
-                    ),
+                    '/comments',
+                    arguments: post.id, 
                   );
                 },
               ),
